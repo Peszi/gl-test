@@ -15,7 +15,8 @@ internal class EntitiesMap {
     }
 
     fun getSortedEntities(): List<MutableList<Int>> =
-            RenderUtil.qsort(entitiesMap.keys.toList()).map { entitiesMap[it] ?: mutableListOf() }.asReversed()
+            RenderUtil.qsort(entitiesMap.keys.toList())
+                    .map { entitiesMap[it] ?: mutableListOf() }
 
     companion object {
 

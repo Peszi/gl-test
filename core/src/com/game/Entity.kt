@@ -19,7 +19,7 @@ internal class Entity(
     var tmp = Vector3()
 
     fun update(delta: Float) {
-        transform.translate(tmp.set(direction).scl(delta * 2))
+        transform.translate(tmp.set(direction).scl(delta * 0.1f))
     }
 }
 

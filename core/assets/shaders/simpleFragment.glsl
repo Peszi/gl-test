@@ -2,7 +2,7 @@
     precision mediump float;
 #endif
 
-varying vec3 v_color;
+varying vec4 v_color;
 varying vec2 v_texCoords;
 
 uniform sampler2D u_texture;
@@ -17,7 +17,7 @@ float LinearizeDepth(float depth)
 }
 
 void main() {
-    float depth = 1 - LinearizeDepth(gl_FragCoord.z) / far;
-    vec3 color = texture2D(u_texture, v_texCoords).rgb * v_color;
-    gl_FragColor = vec4(color * depth, 0.5f);
+//    float depth = 1 - LinearizeDepth(gl_FragCoord.z) / far;
+    vec3 color = texture2D(u_texture, v_texCoords).rgb * v_color.rgb;
+    gl_FragColor = vec4(color, v_color.a);
 }

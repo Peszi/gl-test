@@ -24,12 +24,17 @@ class GlMain : ApplicationAdapter() {
         val simpleModelId = resources.loadModel("orientationBox.obj")
         val simpleShaderId = resources.loadShader("simple")
         val simpleTextureId = resources.loadTexture("orientationBox.png")
-        val simpleMaterialId = resources.addMaterial(MaterialResource(simpleShaderId, simpleTextureId))
+        val simpleMaterialId = resources.addMaterial(MaterialResource(simpleShaderId, simpleTextureId, Color(1f, 1f, 1f, 0.5f)))
+
+        val monkeyModelId = resources.loadModel("tombstone.obj")
+        val monkeyTextureId = resources.loadTexture("tombstone.png")
+        val monkeyMaterialId = resources.addMaterial(MaterialResource(simpleShaderId, monkeyTextureId))
 
         val random = Random()
-        val objectsCount = 10_000
-        val translateLimit = objectsCount / 50
+        val objectsCount = 40_000
+        val translateLimit = objectsCount / 80
         for (i in 0..objectsCount) {
+            val modelChoice: Boolean = random.nextFloat() > 1.95f
             renderer.addEntity(
                     Entity(
                             Matrix4().idt()
@@ -39,7 +44,9 @@ class GlMain : ApplicationAdapter() {
                                             (random.nextFloat()-.5f) * translateLimit)
                                     .rotate(
                                             Vector3(1f, 1f, 1f), random.nextFloat() * 360),
-                            RenderComponent(simpleModelId, simpleMaterialId),
+                            RenderComponent(
+                                    if (modelChoice) simpleModelId else monkeyModelId,
+                                    if (modelChoice) simpleMaterialId else monkeyMaterialId),
                             random
                     )
             )
@@ -49,7 +56,6 @@ class GlMain : ApplicationAdapter() {
     fun update() {
 //        if (Gdx.input.isKeyJustPressed(Input.Keys.F5)) resources.reloadResources()
         gameCamera.update(renderer.camera, Gdx.graphics.deltaTime)
-
         renderer.update()
     }
 

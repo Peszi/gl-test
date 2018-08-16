@@ -1,6 +1,7 @@
 package com.game
 
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.Mesh
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g3d.Model
@@ -48,7 +49,7 @@ internal class EngineResourcesImpl: EngineResources {
 
     override fun loadTexture(textureName: String): Int {
         println("loading texture [$textureName]")
-        texturesBuffer.add(Texture(TEXTURES_DIR + textureName))
+        texturesBuffer.add(Texture(Gdx.files.internal(TEXTURES_DIR + textureName), true))
         return texturesBuffer.size-1
     }
 
@@ -94,5 +95,5 @@ internal class EngineResourcesImpl: EngineResources {
 internal class MaterialResource(
         var shaderId: Int = 0,
         var textureId: Int = 0,
-        var color: Vector3 = Vector3(1f, 1f, 1f)
+        var color: Color = Color(1f, 1f, 1f, 1f)
 )
