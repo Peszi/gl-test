@@ -7,69 +7,81 @@ import com.badlogic.gdx.graphics.g3d.Model
 import com.badlogic.gdx.graphics.g3d.Shader
 import com.badlogic.gdx.graphics.g3d.loader.ObjLoader
 import com.badlogic.gdx.graphics.glutils.ShaderProgram
+import com.badlogic.gdx.math.Vector3
 
 internal interface EngineResources {
-    fun loadShader(shaderName: String)
-    fun loadTexture(textureName: String)
-    fun loadModel(modelName: String)
-    fun getShader(shaderName: String): ShaderProgram?
-    fun getTexture(textureName: String): Texture?
-    fun getModel(modelName: String): Model?
-    fun reloadResources()
+    fun loadShader(shaderName: String): Int
+    fun loadTexture(textureName: String): Int
+    fun loadModel(modelName: String): Int
+    fun addMaterial(material: MaterialResource): Int
+
+    fun getShader(shaderId: Int): ShaderProgram
+    fun getTexture(textureId: Int): Texture
+    fun getModel(modelId: Int): Mesh
+    fun getMaterial(materialId: Int): MaterialResource
+
     fun disposeResources()
 }
 
 internal class EngineResourcesImpl: EngineResources {
 
-    val shadersBuffer = mutableMapOf<String, ShaderProgram>()
-    val texturesBuffer = mutableMapOf<String, Texture>()
-    val modelsBuffer = mutableMapOf<String, Model>()
+    private val shadersBuffer = mutableListOf<ShaderProgram>()
+    private val texturesBuffer = mutableListOf<Texture>()
+    private val materialsBuffer = mutableListOf<MaterialResource>()
 
-    private lateinit var objLoader: ObjLoader
+    private val modelsBuffer = mutableListOf<Mesh>()
 
-    init {
-        objLoader = ObjLoader()
-    }
+    private var objLoader = ObjLoader()
 
-    override fun loadShader(shaderName: String) {
+    override fun loadShader(shaderName: String): Int {
         println("loading shader [$shaderName]")
-        shadersBuffer[shaderName]?.dispose()
-        shadersBuffer[shaderName] = ShaderProgram(
+        val shaderProgram = ShaderProgram(
                 Gdx.files.internal("${SHADERS_DIR + shaderName}Vertex.glsl").readString(),
                 Gdx.files.internal("${SHADERS_DIR + shaderName}Fragment.glsl").readString()
         )
+        if (!shaderProgram.isCompiled)
+            throw RuntimeException(shaderProgram.log)
+        shaderProgram.uniforms.map { " - $it" }.forEach(System.out::println)
+        shadersBuffer.add(shaderProgram)
+        return shadersBuffer.size-1
     }
 
-    override fun loadTexture(textureName: String) {
+    override fun loadTexture(textureName: String): Int {
         println("loading texture [$textureName]")
-        texturesBuffer[textureName]?.dispose()
-        texturesBuffer[textureName] = Texture(TEXTURES_DIR + textureName)
+        texturesBuffer.add(Texture(TEXTURES_DIR + textureName))
+        return texturesBuffer.size-1
     }
 
-    override fun loadModel(modelName: String) {
+    override fun loadModel(modelName: String): Int {
         println("loading model [$modelName]")
-        modelsBuffer[modelName]?.dispose()
-        var model = objLoader.loadModel(Gdx.files.internal(MODELS_DIR + modelName))
-        model.meshes.forEach{ it.setAutoBind(false) }
-        modelsBuffer[modelName] = model
-}
+        val mesh = objLoader.loadModel(Gdx.files.internal(MODELS_DIR + modelName)).meshes.first()
+        mesh.setAutoBind(false)
+        modelsBuffer.add(mesh)
+        return modelsBuffer.size-1
+    }
 
-    override fun getShader(shaderName: String) = shadersBuffer[shaderName]
+    override fun addMaterial(material: MaterialResource): Int {
+        println("prepaing material!")
+        materialsBuffer.add(material)
+        return materialsBuffer.size-1
+    }
 
-    override fun getTexture(textureName: String)= texturesBuffer[textureName]
+    override fun getShader(shaderId: Int) =
+            shadersBuffer.getOrNull(shaderId) ?: throw RuntimeException("Shader not exists!")
 
-    override fun getModel(modelName: String) = modelsBuffer[modelName]
+    override fun getTexture(textureId: Int) =
+            texturesBuffer.getOrNull(textureId) ?: throw RuntimeException("Texture not exists!")
 
-    override fun reloadResources() { reloadShaders(); reloadTextures() }
+    override fun getModel(modelId: Int) =
+            modelsBuffer.getOrNull(modelId) ?: throw RuntimeException("Model not exists!")
+
+    override fun getMaterial(materialId: Int) =
+            materialsBuffer.getOrNull(materialId) ?: throw RuntimeException("Material not exists!")
 
     override fun disposeResources() {
-        shadersBuffer.values.forEach(ShaderProgram::dispose)
-        texturesBuffer.values.forEach(Texture::dispose)
+        shadersBuffer.forEach(ShaderProgram::dispose)
+        texturesBuffer.forEach(Texture::dispose)
     }
-
-    private fun reloadShaders() { shadersBuffer.keys.forEach(this::loadShader) }
-
-    private fun reloadTextures() { texturesBuffer.keys.forEach(this::loadTexture) }
 
     companion object {
         const val SHADERS_DIR = "shaders/"
@@ -78,3 +90,9 @@ internal class EngineResourcesImpl: EngineResources {
     }
 
 }
+
+internal class MaterialResource(
+        var shaderId: Int = 0,
+        var textureId: Int = 0,
+        var color: Vector3 = Vector3(1f, 1f, 1f)
+)

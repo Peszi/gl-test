@@ -5,6 +5,7 @@ import kotlin.concurrent.thread
 
 class MainLoop {
 
+    @Volatile private var running = true
     @Volatile private var framesCount = 0
     @Volatile private var framesTime = 0
 
@@ -14,16 +15,17 @@ class MainLoop {
         thread {
             var frameTime = 0L
             var lastTime = System.currentTimeMillis()
-            while (true) {
+            while (running) {
                 frameTime += System.currentTimeMillis() - lastTime
                 lastTime = System.currentTimeMillis()
                 if (frameTime >= 1000) {
                     frameTime -= 1000
-                    val diagMessage = "fps $framesCount render time $framesTime ms"
+                    val diagMessage = "fps $framesCount renderable time ${framesTime}ms of ${TARGET_FRAME_TIME}ms"
                     if (framesTime <= TARGET_FRAME_TIME) println(diagMessage) else System.err.println(diagMessage)
                     framesCount = 0
                 }
-                sleep(1000L - frameTime)
+                val sleepTime = 1000L - frameTime
+                if (sleepTime > 0) sleep(sleepTime)
             }
         }
     }
@@ -37,6 +39,9 @@ class MainLoop {
         framesCount++
     }
 
+    fun dispose() {
+        running = false
+    }
 
     companion object {
 

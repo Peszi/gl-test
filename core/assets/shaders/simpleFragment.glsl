@@ -1,18 +1,23 @@
-attribute vec3 a_position;
-attribute vec2 a_texCoord0;
+#ifdef GL_ES
+    precision mediump float;
+#endif
 
-uniform mat4 u_projTrans;
-uniform mat4 u_worldTrans;
-uniform vec4 u_color;
-
-varying vec4 v_position;
-varying vec4 v_color;
+varying vec3 v_color;
 varying vec2 v_texCoords;
 
-void main() {
-    v_color = u_color;
-    v_texCoords = vec2(a_texCoord0.x, 1 - a_texCoord0.y);
+uniform sampler2D u_texture;
 
-    v_position = u_worldTrans * vec4(a_position, 1.0);
-    gl_Position = u_projTrans * v_position;
+float near = 0.1;
+float far  = 100.0;
+
+float LinearizeDepth(float depth)
+{
+    float z = depth * 2.0 - 1.0; // back to NDC
+    return (2.0 * near * far) / (far + near - z * (far - near));
+}
+
+void main() {
+    float depth = 1 - LinearizeDepth(gl_FragCoord.z) / far;
+    vec3 color = texture2D(u_texture, v_texCoords).rgb * v_color;
+    gl_FragColor = vec4(color * depth, 0.5f);
 }

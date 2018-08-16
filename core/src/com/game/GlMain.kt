@@ -2,21 +2,10 @@ package com.game
 
 import com.badlogic.gdx.ApplicationAdapter
 import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.Input
 import com.badlogic.gdx.graphics.*
-import com.badlogic.gdx.graphics.g2d.SpriteBatch
-import com.badlogic.gdx.graphics.g3d.*
-import com.badlogic.gdx.graphics.glutils.ShaderProgram
-import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute
-import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder
 import com.badlogic.gdx.math.Vector3
-import com.badlogic.gdx.graphics.VertexAttributes
-import com.badlogic.gdx.graphics.VertexAttribute
-import com.badlogic.gdx.graphics.g3d.loader.ObjLoader
 import com.badlogic.gdx.math.Matrix4
-import com.badlogic.gdx.graphics.glutils.VertexBufferObject
-
-
+import java.util.*
 
 
 class GlMain : ApplicationAdapter() {
@@ -24,33 +13,44 @@ class GlMain : ApplicationAdapter() {
     private var gameCamera: GameCamera = GameCamera()
     private val mainLoop = MainLoop()
 
-    private lateinit var engineResources: EngineResources
-    private lateinit var engineRenderer: EngineRenderer
+    private lateinit var resources: EngineResources
+    private lateinit var renderer: EngineRenderer
 
     override fun create() {
-        engineResources = EngineResourcesImpl()
-        engineRenderer = EngineRenderer()
 
-        engineResources.loadShader("simple")
-        engineResources.loadModel("orientationBox.obj")
-        engineResources.loadTexture("orientationBox.png")
+        resources = EngineResourcesImpl()
+        renderer = EngineRenderer(resources)
 
-        engineRenderer.entitiesList.add(
-                Entity(
-                        Matrix4().idt(),
-                        RenderComponent(
-                                "simple",
-                                "orientationBox.png",
-                                "orientationBox.obj"
-                        )
-                )
-        )
+        val simpleModelId = resources.loadModel("orientationBox.obj")
+        val simpleShaderId = resources.loadShader("simple")
+        val simpleTextureId = resources.loadTexture("orientationBox.png")
+        val simpleMaterialId = resources.addMaterial(MaterialResource(simpleShaderId, simpleTextureId))
+
+        val random = Random()
+        val objectsCount = 10_000
+        val translateLimit = objectsCount / 50
+        for (i in 0..objectsCount) {
+            renderer.addEntity(
+                    Entity(
+                            Matrix4().idt()
+                                    .translate(
+                                            (random.nextFloat()-.5f) * translateLimit,
+                                            (random.nextFloat()-.5f) * translateLimit,
+                                            (random.nextFloat()-.5f) * translateLimit)
+                                    .rotate(
+                                            Vector3(1f, 1f, 1f), random.nextFloat() * 360),
+                            RenderComponent(simpleModelId, simpleMaterialId),
+                            random
+                    )
+            )
+        }
     }
 
     fun update() {
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F5))
-            engineResources.reloadResources()
-        gameCamera.update(engineRenderer.camera, Gdx.graphics.deltaTime)
+//        if (Gdx.input.isKeyJustPressed(Input.Keys.F5)) resources.reloadResources()
+        gameCamera.update(renderer.camera, Gdx.graphics.deltaTime)
+
+        renderer.update()
     }
 
     override fun render() {
@@ -61,21 +61,24 @@ class GlMain : ApplicationAdapter() {
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f)
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT or GL20.GL_DEPTH_BUFFER_BIT)
 
-        Gdx.gl.glDisable(GL20.GL_DEPTH_TEST)
-        Gdx.gl.glDepthMask(false)
-        Gdx.gl.glDisable(GL20.GL_BLEND)
+        Gdx.gl.glEnable(GL20.GL_DEPTH_TEST)
+        Gdx.gl.glDepthMask(true)
+
         Gdx.gl.glEnable(GL20.GL_CULL_FACE)
+        Gdx.gl.glCullFace(GL20.GL_BACK)
+        Gdx.gl.glFrontFace(GL20.GL_CCW)
 
         Gdx.gl20.glEnable(GL20.GL_TEXTURE_2D)
         Gdx.gl20.glEnable(GL20.GL_BLEND)
-//        Gdx.gl20.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA)
+        Gdx.gl20.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA)
 
-        engineRenderer.render(engineResources)
+        renderer.render()
 
         mainLoop.onFrameEnd()
     }
 
     override fun dispose() {
-        engineResources.disposeResources()
+        resources.disposeResources()
+        mainLoop.dispose()
     }
 }

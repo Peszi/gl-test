@@ -11,8 +11,8 @@ public class DesktopLauncher {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
 		config.width = 320; config.height = 240;
 		final int offset = 32;
-		config.x = Toolkit.getDefaultToolkit().getScreenSize().width/2 - config.width;
-		config.y = Toolkit.getDefaultToolkit().getScreenSize().height/2;
+		config.x = Toolkit.getDefaultToolkit().getScreenSize().width - config.width - 80;
+		config.y = Toolkit.getDefaultToolkit().getScreenSize().height - config.height - 80;
 		new LwjglApplication(new GlMain(), config);
 	}
 }
