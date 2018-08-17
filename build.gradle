@@ -58,7 +58,6 @@ project(":desktop") {
 project(":core") {
     apply plugin: "kotlin"
 
-
     dependencies {
         compile "com.badlogicgames.gdx:gdx:$gdxVersion"
         compile "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
@@ -66,6 +65,8 @@ project(":core") {
         compile "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
         compile "com.badlogicgames.gdx:gdx-controllers:$gdxVersion"
         compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+        compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:0.24.0"
+        implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.24.0'
     }
 }
 

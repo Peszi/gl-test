@@ -6,26 +6,31 @@ import com.badlogic.gdx.graphics.Mesh
 import com.badlogic.gdx.graphics.PerspectiveCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.glutils.ShaderProgram
-import com.badlogic.gdx.math.Matrix4
-import com.badlogic.gdx.math.Vector3
 import com.game.util.EntitiesMap
 
 internal class EngineRenderer(
-        val engineResources: EngineResources
+        private val engineResources: EngineResources
 ) {
 
-    private val entitiesList = mutableListOf<Entity>()
-    private val entitiesKeys = mutableListOf<Int>()
-
-    // tmp
+    private var gameCamera: GameCamera = GameCamera()
 
     private var currentMaterial: MaterialResource? = null
     private var currentMesh: Mesh? = null
     private var currentShader: ShaderProgram? = null
     private var currentTexture: Texture? = null
 
+    private var currentMaterialId: Int = -1
+    private var currentMeshId: Int = -1
+    private var currentShaderId: Int = -1
+    private var currentTextureId: Int = -1
+
+    // tmp
+
+    var materialSwitches: Int = 0
+    var meshSwitches: Int = 0
+
     var camera = PerspectiveCamera(
-            75f, Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat()
+            60f, Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat()
     )
 
     init {
@@ -36,76 +41,86 @@ internal class EngineRenderer(
         camera.update()
     }
 
-    fun addEntity(entity: Entity) {
-        entitiesList.add(entity)
-        entitiesKeys.add(RenderUtil.generateKey(entity, camera))
+    fun render(entitiesOrder: List<MutableList<Int>>, entitiesList: List<Entity>) {
+
+        gameCamera.update(camera, Gdx.graphics.deltaTime)
+
+        // Setup
+        Gdx.gl.glViewport(0, 0, Gdx.graphics.width, Gdx.graphics.height)
+        Gdx.gl.glClearColor(0f, 0f, 0f, 1f)
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT or GL20.GL_DEPTH_BUFFER_BIT)
+
+        Gdx.gl.glEnable(GL20.GL_DEPTH_TEST)
+        Gdx.gl.glDepthMask(true)
+
+        Gdx.gl.glEnable(GL20.GL_CULL_FACE)
+        Gdx.gl.glCullFace(GL20.GL_BACK)
+        Gdx.gl.glFrontFace(GL20.GL_CCW)
+
+        Gdx.gl20.glEnable(GL20.GL_TEXTURE_2D)
+        Gdx.gl20.glEnable(GL20.GL_BLEND)
+        Gdx.gl20.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA)
+
+        // Render
+        entitiesOrder.forEach { renderEntities(it, entitiesList) }
+
+        resetBindings()
+//        printDiag()
     }
 
-    fun update() {
-        val delta = Gdx.graphics.deltaTime
-        entitiesList.forEach { it.update(delta) }
+    fun printDiag() {
+        println("switches per frame: material = $materialSwitches mesh = $meshSwitches")
+        materialSwitches = 0; meshSwitches = 0
     }
 
-    fun render() {
-        // update keys
-        entitiesKeys.mapIndexed { index, _ -> RenderUtil.generateKey(entitiesList[index], camera) }
-        // sort entities
-        EntitiesMap.build(entitiesKeys).getSortedEntities().forEach(this::renderEntities)
-    }
+    private fun renderEntities(entitiesOrder: MutableList<Int>, entitiesList: List<Entity>) {
+        entitiesOrder.forEach {
+            val entity = entitiesList.getOrNull(it) ?: return
 
-    private fun renderEntities(entitiesGroup: MutableList<Int>) {
-        entitiesGroup.forEachIndexed { index, i ->
-            val entity = entitiesList.getOrNull(i) ?: return@forEachIndexed
-            if (index == 0) {
-                currentMaterial = engineResources.getMaterial(entity.renderable.materialId)
-                currentMesh = engineResources.getModel(entity.renderable.meshId)
-                currentShader = engineResources.getShader(currentMaterial!!.shaderId)
-                currentTexture = engineResources.getTexture(currentMaterial!!.textureId)
+            val materialId = entity.renderable.materialId
+            if (currentMaterialId != materialId) {
+                materialSwitches++
+                currentMaterial = engineResources.getMaterial(materialId)
+                currentMaterialId = materialId
 
-                currentTexture!!.bind()
-                currentMesh!!.bind(currentShader)
-                currentShader!!.begin()
-                currentShader!!.setUniformMatrix("u_projTrans", camera.combined)
-                currentShader!!.setUniformf("u_cameraPos", camera.position)
+                val textureId = currentMaterial!!.textureId
+                if (currentTextureId != textureId) {
+                    currentTexture = engineResources.getTexture(currentMaterial!!.textureId)
+                    currentTexture!!.bind()
+                    currentTextureId = textureId
+                }
+
+                val shaderId = currentMaterial!!.shaderId
+                if (currentShaderId != shaderId) {
+                    if (currentShaderId > 0) currentShader!!.end()
+                    currentShader = engineResources.getShader(currentMaterial!!.shaderId)
+                    currentShader!!.begin()
+                    currentShader!!.setUniformMatrix("u_projTrans", camera.combined)
+                    currentShader!!.setUniformf("u_cameraPos", camera.position)
+                    currentShaderId = shaderId
+                }
 
                 currentShader!!.setUniformf("u_color", currentMaterial!!.color)
                 currentShader!!.setUniformi("u_texture", 0)
             }
-            renderEntity(entity.transform)
-            if(index == entitiesGroup.size - 1) {
-                currentShader!!.end()
-                currentMesh!!.unbind(currentShader)
+
+            val meshId = entity.renderable.meshId
+            if (currentMeshId != meshId) {
+                meshSwitches++
+                if (currentMeshId > 0) currentMesh!!.unbind(currentShader)
+                currentMesh = engineResources.getModel(entity.renderable.meshId)
+                currentMesh!!.bind(currentShader)
+                currentMeshId = meshId
             }
+
+            currentShader!!.setUniformMatrix("u_worldTrans", entity.transform)
+            currentMesh!!.render(currentShader!!, GL20.GL_TRIANGLES)
         }
     }
 
-    private fun renderEntity(transform: Matrix4) {
-        currentShader!!.setUniformMatrix("u_worldTrans", transform)
-        currentMesh!!.render(currentShader!!, GL20.GL_TRIANGLES)
+    private fun resetBindings() {
+        currentMaterialId = -1; currentMeshId = -1
+        currentShaderId = -1; currentTextureId = -1
     }
 
 }
-
-
-//        texture.bind()
-//
-//        shader.begin()
-//
-//        shader.setUniformMatrix("u_projTrans", camera.combined)
-//        shader.setUniformf("u_color", 1f, 1f, 1f, 1f)
-//        shader.setUniformi("u_texture", 0)
-//
-//        val objectsCount = 50
-//
-//        model.meshes.forEach {
-//            it.bind(shader)
-//            for (x in 0..objectsCount) {
-//                for (y in 0..objectsCount) {
-//                    transform.setTranslation(-objectsCount * 5f + x * 5f, 0f, -objectsCount * 5f + y * 5f)
-//                    shader.setUniformMatrix("u_worldTrans", transform)
-//                    it.renderable(shader, GL20.GL_TRIANGLES)
-//                }
-//            }
-//            it.unbind(shader)
-//        }
-//        shader.end()

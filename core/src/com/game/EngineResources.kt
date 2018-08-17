@@ -8,13 +8,12 @@ import com.badlogic.gdx.graphics.g3d.Model
 import com.badlogic.gdx.graphics.g3d.Shader
 import com.badlogic.gdx.graphics.g3d.loader.ObjLoader
 import com.badlogic.gdx.graphics.glutils.ShaderProgram
-import com.badlogic.gdx.math.Vector3
 
 internal interface EngineResources {
     fun loadShader(shaderName: String): Int
     fun loadTexture(textureName: String): Int
     fun loadModel(modelName: String): Int
-    fun addMaterial(material: MaterialResource): Int
+    fun addMaterial(material: MaterialResource): Pair<Int, MaterialResource>
 
     fun getShader(shaderId: Int): ShaderProgram
     fun getTexture(textureId: Int): Texture
@@ -61,10 +60,10 @@ internal class EngineResourcesImpl: EngineResources {
         return modelsBuffer.size-1
     }
 
-    override fun addMaterial(material: MaterialResource): Int {
+    override fun addMaterial(material: MaterialResource): Pair<Int, MaterialResource> {
         println("prepaing material!")
         materialsBuffer.add(material)
-        return materialsBuffer.size-1
+        return materialsBuffer.size-1 to material
     }
 
     override fun getShader(shaderId: Int) =
@@ -91,9 +90,3 @@ internal class EngineResourcesImpl: EngineResources {
     }
 
 }
-
-internal class MaterialResource(
-        var shaderId: Int = 0,
-        var textureId: Int = 0,
-        var color: Color = Color(1f, 1f, 1f, 1f)
-)
