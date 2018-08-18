@@ -11,7 +11,6 @@ internal class EngineCore(
 ) {
 
     private val entitiesList = mutableListOf<Entity>()
-    private val entitiesKeys = mutableListOf<Long>()
 
     private val lock = java.lang.Object()
     @Volatile private var running = true
@@ -20,15 +19,23 @@ internal class EngineCore(
 
     private var cameraPrefs: CameraPrefs = CameraPrefs()
 
-    private var orderBuffer = listOf<MutableList<Int>>()
+    private var orderBuffer = mutableListOf<Int>()
     private var entitiesBuffer = mutableListOf<Entity>()
 
-    fun updateEntities(camera: Camera): RenderBuffer {
-//        cameraPrefs.update(camera)
-        entitiesBuffer.clear()
-        entitiesList.forEach{ entitiesBuffer.add(it) }
-        synchronized(lock) { lock.notifyAll() }
-        return RenderBuffer(orderBuffer, entitiesBuffer)
+    private val tmp = Vector3()
+
+    fun updateEntities(camera: Camera): List<Entity> {
+        synchronized(lock) {
+            // update camera
+            cameraPrefs.update(camera)
+            // fill up rendering buffer
+            entitiesBuffer.clear()
+            orderBuffer.forEach {
+                entitiesBuffer.add(entitiesList[it]) }
+            // start updating
+            lock.notifyAll()
+        }
+        return entitiesBuffer
     }
 
     private fun update() {
@@ -36,16 +43,21 @@ internal class EngineCore(
 
         // Update
         val delta = Gdx.graphics.deltaTime
-        entitiesList.forEach { it.update(delta) }
 
-//        entitiesKeys.forEachIndexed { index, _ ->
-//            RenderUtil.updateRenderKey(entitiesList[index], cameraPrefs) }
+        val finalList = mutableListOf<Pair<Long, Int>>()
+        entitiesList.forEachIndexed { index, entity ->
+            entity.update(delta)
+            val distance = cameraPrefs.position.dst(entity.transform.getTranslation(tmp))
+            if (distance < cameraPrefs.far) {
+                finalList.add(RenderUtil.getRenderKey(entity.renderable.renderingKey, distance / cameraPrefs.far) to index)
+            }
+        }
 
-        orderBuffer = EntitiesMap.build(
-                entitiesKeys.indices.map {
-                    RenderUtil.updateRenderKey(entitiesList[it], cameraPrefs)
-                }
-        ).getSortedEntities()
+        val sorted = SortUtility.keysQsort(finalList)
+        orderBuffer.clear()
+        sorted.asReversed().forEach {
+            orderBuffer.add(it.second)
+        }
 
         diagnostic.endUpdate()
     }
@@ -59,7 +71,6 @@ internal class EngineCore(
 
     fun addEntity(entity: Entity) {
         entitiesList.add(entity)
-        entitiesKeys.add(entity.renderable.renderingKey)
     }
 
     fun dispose() {
@@ -92,14 +103,9 @@ internal class EngineCore(
     }
 }
 
-internal class RenderBuffer(
-        val orderBuffer: List<MutableList<Int>>,
-        val entitiesBuffer: MutableList<Entity>
-)
-
 internal class CameraPrefs {
 
-    var position: Vector3 = Vector3.Zero
+    var position: Vector3 = Vector3()
     var near: Float = 0f
     var far: Float = 0f
 

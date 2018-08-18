@@ -25,7 +25,7 @@ class GlMain : ApplicationAdapter() {
         val simpleShaderId = resources.loadShader("simple")
         val simpleTextureId = resources.loadTexture("orientationBox.png")
         val simpleMaterialId = resources.addMaterial(MaterialResource(simpleShaderId, simpleTextureId, Color(1f, 1f, 1f, 1f)))
-        val simpleMaterialId2 = resources.addMaterial(MaterialResource(simpleShaderId, simpleTextureId, Color(1f, 1f, 1f, 1f)))
+        val simpleMaterialId2 = resources.addMaterial(MaterialResource(simpleShaderId, simpleTextureId, Color(1f, 1f, 1f, .5f)))
 
         val monkeyModelId = resources.loadModel("tombstone.obj")
         val monkeyTextureId = resources.loadTexture("tombstone.png")
@@ -33,7 +33,7 @@ class GlMain : ApplicationAdapter() {
 
         val random = Random()
         val objectsCount = 30_000
-        val translateLimit = objectsCount / 80
+        val translateLimit = objectsCount / 140
 
         for (i in 0..objectsCount) {
             val modelIdx: Int = random.nextInt(3)
@@ -42,21 +42,31 @@ class GlMain : ApplicationAdapter() {
                             (random.nextFloat()-.5f) * translateLimit,
                             (random.nextFloat()-.5f) * translateLimit,
                             (random.nextFloat()-.5f) * translateLimit)
-                    .rotate(
-                            Vector3(random.nextFloat(), random.nextFloat(), random.nextFloat()), random.nextFloat() * 360)
+//                    .rotate(
+//                            Vector3(random.nextFloat(), random.nextFloat(), random.nextFloat()), random.nextFloat() * 360)
             val renderable = when (modelIdx) {
                 0 -> RenderComponent.build(simpleModelId, simpleMaterialId)
                 1 -> RenderComponent.build(monkeyModelId, monkeyMaterialId)
-                else -> RenderComponent.build(simpleModelId, simpleMaterialId2)
+                else -> RenderComponent.build(simpleModelId, simpleMaterialId)
             }
             engineLoop.addEntity(Entity(translate, renderable, false))
         }
+//        for (i in 0..100) {
+//            val translate = Matrix4()
+//                    .translate(0f, 0f, i * 5f)
+//            engineLoop.addEntity(Entity(translate, RenderComponent.build(simpleModelId, simpleMaterialId2), false))
+//        }
+
+    }
+
+    override fun resize(width: Int, height: Int) {
+        renderer.resize(width, height)
     }
 
     override fun render() {
         diagnostic.beginFrame()
         val renderBuffer = engineLoop.updateEntities(renderer.camera)
-        renderer.render(renderBuffer.orderBuffer, renderBuffer.entitiesBuffer)
+        renderer.render(renderBuffer)
         diagnostic.endFrame()
     }
 
