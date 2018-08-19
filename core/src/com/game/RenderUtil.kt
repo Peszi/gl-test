@@ -13,7 +13,7 @@ internal object RenderUtil {
         val isTransparent = material.second.isTransparent()
         // transparency
         generatedKey = generatedKey or
-                (if (isTransparent) 1 else 0).toLong().shl(TRANSPARENCY_OFFSET)
+                (if (isTransparent) 0 else 1).toLong().shl(TRANSPARENCY_OFFSET)
         // materialID
         generatedKey = generatedKey or
                 (material.first.toLong() and THREE_BYTES_MASK).shl(getMaterialOffset(isTransparent))
@@ -22,25 +22,23 @@ internal object RenderUtil {
     }
 
     private fun getMaterialOffset(isTransparent: Boolean): Int =
-            if (isTransparent) HIGHER_BUFFER_OFFSET else LOWER_BUFFER_OFFSET
+            if (isTransparent) LOWER_BUFFER_OFFSET else HIGHER_BUFFER_OFFSET
 
     private fun getDepthOffset(isTransparent: Boolean): Int =
-            if (isTransparent) LOWER_BUFFER_OFFSET else HIGHER_BUFFER_OFFSET
+            if (isTransparent) HIGHER_BUFFER_OFFSET else LOWER_BUFFER_OFFSET
 
     private fun isTransparent(renderingKey: Long): Boolean {
         val mask = 1L shl TRANSPARENCY_OFFSET
-        return ((renderingKey and mask) == mask)
+        return ((renderingKey and mask) != mask)
     }
 
     fun getRenderKey(currentKey: Long, entityDepth: Float): Long {
-        var generatedKey = 0L
         var depth: Long = (entityDepth * THREE_BYTES_MASK).toLong()
         val isTransparent = RenderUtil.isTransparent(currentKey)
-        // entityDepth
-        if (isTransparent) depth = THREE_BYTES_MASK - depth
-        generatedKey = generatedKey or
-                (depth and THREE_BYTES_MASK).shl(getDepthOffset(isTransparent))
-        return (currentKey or generatedKey)
+//        // entityDepth
+        if (!isTransparent) depth = 0x0 // depth = THREE_BYTES_MASK - depth
+        val value = depth.shl(getDepthOffset(isTransparent))
+        return (currentKey or value)
     }
 
 }

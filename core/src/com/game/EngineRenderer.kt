@@ -43,7 +43,7 @@ internal class EngineRenderer(
         camera.position.set(0f, 0f, 0f)
         camera.lookAt(0f, 0f, 0f)
         camera.near = 0.1f
-        camera.far = 1000.0f
+        camera.far = 500.0f
         camera.update()
 
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST)

@@ -14,19 +14,25 @@ internal class Diagnostic {
     private var updatesCount = 0
     private var updateStartTime = 0L
 
+    private var sortStartTime = 0L
+
     var updateTime = 0f
     var renderTime = 0f
-
-    var sortingTime = 0f
+    var sortTime = 0f
 
     private fun printDiagnostic() {
         val diagnosticMessage = "fps $framesCount updates $updatesCount " +
                         "frame ${renderTime.format(2)}/${EngineCore.TARGET_FRAME_TIME.format(2)}ms " +
-                        "update: ${updateTime.format(2)}ms "
+                        "update: ${updateTime.format(2)}ms " +
+                        "sort: ${sortTime.format(2)}ms "
         if (renderTime <= EngineCore.TARGET_FRAME_TIME) println(diagnosticMessage) else System.err.println(diagnosticMessage)
         updatesCount = 0
         framesCount = 0
     }
+
+    fun beginSort() { sortStartTime = System.nanoTime() }
+
+    fun endSort() { sortTime = getTime(sortStartTime); }
 
     fun beginUpdate() { updateStartTime = System.nanoTime() }
 

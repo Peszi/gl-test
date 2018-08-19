@@ -22,6 +22,8 @@ internal class EngineCore(
     private var orderBuffer = mutableListOf<Int>()
     private var entitiesBuffer = mutableListOf<Entity>()
 
+    private val finalList = mutableListOf<Pair<Long, Int>>()
+
     private val tmp = Vector3()
 
     fun updateEntities(camera: Camera): List<Entity> {
@@ -44,20 +46,22 @@ internal class EngineCore(
         // Update
         val delta = Gdx.graphics.deltaTime
 
-        val finalList = mutableListOf<Pair<Long, Int>>()
+        finalList.clear()
         entitiesList.forEachIndexed { index, entity ->
             entity.update(delta)
             val distance = cameraPrefs.position.dst(entity.transform.getTranslation(tmp))
             if (distance < cameraPrefs.far) {
-                finalList.add(RenderUtil.getRenderKey(entity.renderable.renderingKey, distance / cameraPrefs.far) to index)
+                finalList.add(RenderUtil.getRenderKey(
+                        entity.renderable.renderingKey, distance / cameraPrefs.far) to index)
             }
         }
 
-        val sorted = SortUtility.keysQsort(finalList)
+        diagnostic.beginSort()
         orderBuffer.clear()
-        sorted.asReversed().forEach {
-            orderBuffer.add(it.second)
-        }
+        SortUtility.keysQsort(finalList)
+                .asReversed()
+                .forEach { orderBuffer.add(it.second) }
+        diagnostic.endSort()
 
         diagnostic.endUpdate()
     }

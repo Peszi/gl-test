@@ -32,7 +32,7 @@ class GlMain : ApplicationAdapter() {
         val monkeyMaterialId = resources.addMaterial(MaterialResource(simpleShaderId, monkeyTextureId))
 
         val random = Random()
-        val objectsCount = 30_000
+        val objectsCount = 50_000
         val translateLimit = objectsCount / 140
 
         for (i in 0..objectsCount) {
@@ -47,7 +47,7 @@ class GlMain : ApplicationAdapter() {
             val renderable = when (modelIdx) {
                 0 -> RenderComponent.build(simpleModelId, simpleMaterialId)
                 1 -> RenderComponent.build(monkeyModelId, monkeyMaterialId)
-                else -> RenderComponent.build(simpleModelId, simpleMaterialId)
+                else -> RenderComponent.build(simpleModelId, simpleMaterialId2)
             }
             engineLoop.addEntity(Entity(translate, renderable, false))
         }
