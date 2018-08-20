@@ -36,8 +36,8 @@ internal class EngineResourcesImpl: EngineResources {
     override fun loadShader(shaderName: String): Int {
         println("loading shader [$shaderName]")
         val shaderProgram = ShaderProgram(
-                Gdx.files.internal("${SHADERS_DIR + shaderName}Vertex.glsl").readString(),
-                Gdx.files.internal("${SHADERS_DIR + shaderName}Fragment.glsl").readString()
+                Gdx.files.internal("${shaderName}Vertex.glsl").readString(),
+                Gdx.files.internal("${shaderName}Fragment.glsl").readString()
         )
         if (!shaderProgram.isCompiled)
             throw RuntimeException(shaderProgram.log)
@@ -48,13 +48,13 @@ internal class EngineResourcesImpl: EngineResources {
 
     override fun loadTexture(textureName: String): Int {
         println("loading texture [$textureName]")
-        texturesBuffer.add(Texture(Gdx.files.internal(TEXTURES_DIR + textureName), true))
+        texturesBuffer.add(Texture(Gdx.files.internal(textureName), true))
         return texturesBuffer.size-1
     }
 
     override fun loadModel(modelName: String): Int {
         println("loading model [$modelName]")
-        val mesh = objLoader.loadModel(Gdx.files.internal(MODELS_DIR + modelName)).meshes.first()
+        val mesh = objLoader.loadModel(Gdx.files.internal(modelName)).meshes.first()
         mesh.setAutoBind(false)
         modelsBuffer.add(mesh)
         return modelsBuffer.size-1
@@ -81,12 +81,6 @@ internal class EngineResourcesImpl: EngineResources {
     override fun disposeResources() {
         shadersBuffer.forEach(ShaderProgram::dispose)
         texturesBuffer.forEach(Texture::dispose)
-    }
-
-    companion object {
-        const val SHADERS_DIR = "shaders/"
-        const val TEXTURES_DIR = "textures/"
-        const val MODELS_DIR = "models/"
     }
 
 }

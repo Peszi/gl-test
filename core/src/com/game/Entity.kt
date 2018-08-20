@@ -17,7 +17,7 @@ internal class Entity(
 
     fun update(delta: Float) {
         if (!isStatic)
-            transform.translate(tmp.set(direction).scl(delta * 0.1f))
+            transform.translate(tmp.set(direction).scl(delta * .002f))
     }
 
     fun clone() =
@@ -31,16 +31,14 @@ internal class Entity(
 internal class RenderComponent(
         var meshId: Int = 0,
         var materialId: Int = 0,
-        var renderingKey: Long = 0L,
-        var tranparant: Boolean = false
+        var renderingKey: Long = 0L
 ) {
 
     companion object {
 
         fun build(meshId: Int, material: Pair<Int, MaterialResource>) = RenderComponent(
                 meshId, material.first,
-                RenderUtil.generateKey(material),
-                material.second.isTransparent()
+                RenderUtil.generateKey(material)
         )
     }
 }

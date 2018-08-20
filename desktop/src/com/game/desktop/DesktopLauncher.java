@@ -13,6 +13,9 @@ public class DesktopLauncher {
 		final int offset = 32;
 		config.x = Toolkit.getDefaultToolkit().getScreenSize().width - config.width - 80;
 		config.y = Toolkit.getDefaultToolkit().getScreenSize().height - config.height - 80;
+		config.backgroundFPS = 999;
+		config.foregroundFPS = 999;
+		config.vSyncEnabled = false;
 
 //		config.width = Toolkit.getDefaultToolkit().getScreenSize().width;
 //        config.height = Toolkit.getDefaultToolkit().getScreenSize().height;

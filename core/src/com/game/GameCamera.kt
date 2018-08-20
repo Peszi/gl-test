@@ -3,6 +3,7 @@ package com.game
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.graphics.Camera
+import com.badlogic.gdx.graphics.PerspectiveCamera
 import com.badlogic.gdx.math.Vector3
 
 internal class GameCamera {
@@ -17,7 +18,25 @@ internal class GameCamera {
 
     private var tmp = Vector3()
 
-    fun update(camera: Camera, deltaTime: Float) {
+    var camera = PerspectiveCamera(
+            60f, Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat()
+    )
+
+    init {
+        camera.position.set(0f, 0f, 0f)
+        camera.lookAt(0f, 0f, 0f)
+        camera.near = 0.1f
+        camera.far = 500.0f
+        camera.update()
+    }
+
+    fun updateViewport(width: Float, height: Float) {
+        camera.viewportWidth = width
+        camera.viewportHeight = height
+        Gdx.gl.glViewport(0, 0, camera.viewportWidth.toInt(), camera.viewportHeight.toInt())
+    }
+
+    fun update(deltaTime: Float) {
         // Rotation
         Gdx.input.isCursorCatched = Gdx.input.isButtonPressed(Input.Buttons.LEFT)
         if (Gdx.input.isCursorCatched) {

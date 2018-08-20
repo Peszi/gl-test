@@ -3,22 +3,21 @@ package com.game
 import java.util.*
 import kotlin.concurrent.schedule
 
-internal class Diagnostic {
+internal interface Diagnostic {
+    fun enableDiagnostic(enable: Boolean)
+}
+
+internal class DiagnosticImpl: Diagnostic {
 
     private var diagnosticTimer =
             Timer().schedule(0, 1000){ printDiagnostic() }
 
-    private var framesCount = 0
-    private var frameStartTime = 0L
+    @Volatile private var framesCount = 0
+    @Volatile private var updatesCount = 0
 
-    private var updatesCount = 0
-    private var updateStartTime = 0L
-
-    private var sortStartTime = 0L
-
-    var updateTime = 0f
-    var renderTime = 0f
-    var sortTime = 0f
+    @Volatile var updateTime = 0f
+    @Volatile var renderTime = 0f
+    @Volatile var sortTime = 0f
 
     private fun printDiagnostic() {
         val diagnosticMessage = "fps $framesCount updates $updatesCount " +
@@ -30,24 +29,19 @@ internal class Diagnostic {
         framesCount = 0
     }
 
-    fun beginSort() { sortStartTime = System.nanoTime() }
-
-    fun endSort() { sortTime = getTime(sortStartTime); }
-
-    fun beginUpdate() { updateStartTime = System.nanoTime() }
-
-    fun endUpdate() { updateTime = getTime(updateStartTime); updatesCount++ }
-
-    fun beginFrame() { frameStartTime = System.nanoTime() }
-
-    fun endFrame() { renderTime = getTime(frameStartTime); framesCount++ }
+    override fun enableDiagnostic(enable: Boolean) {
+        if (enable) {
+            diagnosticTimer = Timer().schedule(0, 1000){ printDiagnostic() }
+        } else {
+            diagnosticTimer.run()
+            diagnosticTimer.cancel()
+        }
+    }
 
     companion object {
 
         fun Float.format(digits: Int) =
                 java.lang.String.format("%.${digits}f", this)
 
-        fun getTime(startTime: Long): Float =
-                (System.nanoTime() - startTime) / 1000_000f
     }
 }

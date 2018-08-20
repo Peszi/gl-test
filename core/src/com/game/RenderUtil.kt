@@ -36,7 +36,7 @@ internal object RenderUtil {
         var depth: Long = (entityDepth * THREE_BYTES_MASK).toLong()
         val isTransparent = RenderUtil.isTransparent(currentKey)
 //        // entityDepth
-        if (!isTransparent) depth = 0x0 // depth = THREE_BYTES_MASK - depth
+        if (!isTransparent) depth = 0x0 // THREE_BYTES_MASK - depth
         val value = depth.shl(getDepthOffset(isTransparent))
         return (currentKey or value)
     }

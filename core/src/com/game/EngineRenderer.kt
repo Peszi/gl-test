@@ -1,13 +1,11 @@
 package com.game
 
 import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.Input
 import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.Mesh
-import com.badlogic.gdx.graphics.PerspectiveCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.glutils.ShaderProgram
-import com.game.util.EntitiesMap
+import com.game.util.DiagnosticTimer
 import java.util.*
 import kotlin.concurrent.schedule
 
@@ -15,7 +13,7 @@ internal class EngineRenderer(
         private val engineResources: EngineResources
 ) {
 
-    private var gameCamera: GameCamera = GameCamera()
+    var gameCamera: GameCamera = GameCamera()
 
     private var currentMaterial: MaterialResource? = null
     private var currentMesh: Mesh? = null
@@ -27,24 +25,17 @@ internal class EngineRenderer(
     private var currentShaderId: Int = -1
     private var currentTextureId: Int = -1
 
-    // tmp
+    val diagnosticTimer = DiagnosticTimer()
+
+    // Stats
 
     var materialSwitches: Int = 0
     var meshSwitches: Int = 0
 
-    var modelIdx: Int = 0
-    var rendered: Boolean = false
-
-    var camera = PerspectiveCamera(
-            60f, Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat()
-    )
+    var elapsedTime = 0f
 
     init {
-        camera.position.set(0f, 0f, 0f)
-        camera.lookAt(0f, 0f, 0f)
-        camera.near = 0.1f
-        camera.far = 500.0f
-        camera.update()
+        Gdx.gl.glClearColor(0f, 0f, 0f, 1f)
 
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST)
         Gdx.gl.glDepthMask(true)
@@ -58,48 +49,35 @@ internal class EngineRenderer(
         Gdx.gl20.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA)
 
         Timer().schedule(0, 1000){ printDiag() }
+
+        Gdx.graphics.isContinuousRendering = false
+        Gdx.graphics.requestRendering()
     }
 
-    fun resize(width: Int, height: Int) {
-        camera.viewportWidth = width.toFloat()
-        camera.viewportHeight = height.toFloat()
+    fun resize(width: Float, height: Float) {
+        gameCamera.updateViewport(width, height)
+    }
+
+    fun update(delta: Float) {
+        gameCamera.update(Gdx.graphics.deltaTime)
     }
 
     fun render(entitiesList: List<Entity>) {
-
-//        println(entitiesList.size)
-
-        gameCamera.update(camera, Gdx.graphics.deltaTime)
-        // Setup
-        Gdx.gl.glViewport(0, 0, camera.viewportWidth.toInt(), camera.viewportHeight.toInt())
-        Gdx.gl.glClearColor(0f, 0f, 0f, 1f)
+        diagnosticTimer.startTimer()
+        update(Gdx.graphics.deltaTime)
+        elapsedTime += Gdx.graphics.deltaTime
+        // Clean up
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT or GL20.GL_DEPTH_BUFFER_BIT)
-
-        if (Gdx.input.isKeyJustPressed(Input.Keys.RIGHT)) {
-            modelIdx++
-            println(modelIdx)
-        }
-
-        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-            modelIdx = -1
-        }
-
-        if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
-            modelIdx++
-            println(modelIdx)
-        }
-
         // Render
-        entitiesList
-//                .filterIndexed { index, entity -> index <= modelIdx }
-                .forEach { renderEntities(it) }
-//        if (modelIdx > 0 && modelIdx < entitiesList.size && !rendered) {
-//            renderEntities(entitiesList[modelIdx])
-//            rendered = true
-//        }
+        entitiesList.forEach(this::renderEntities)
+        afterFrame()
+        diagnosticTimer.stopTimer()
+    }
 
-        resetBindings()
-//        printDiag()
+    private fun afterFrame() {
+        currentMaterialId = -1; currentMeshId = -1
+        currentShaderId = -1; currentTextureId = -1
+        Gdx.graphics.requestRendering()
     }
 
     fun printDiag() {
@@ -126,8 +104,9 @@ internal class EngineRenderer(
                 if (currentShaderId > 0) currentShader!!.end()
                 currentShader = engineResources.getShader(currentMaterial!!.shaderId)
                 currentShader!!.begin()
-                currentShader!!.setUniformMatrix("u_projTrans", camera.combined)
-                currentShader!!.setUniformf("u_cameraPos", camera.position)
+                currentShader!!.setUniformMatrix("u_projTrans", gameCamera.camera.combined)
+                currentShader!!.setUniformf("u_cameraPos", gameCamera.camera.position)
+                currentShader!!.setUniformf("u_time", elapsedTime * 10f)
                 currentShaderId = shaderId
             }
 
@@ -146,11 +125,6 @@ internal class EngineRenderer(
 
         currentShader!!.setUniformMatrix("u_worldTrans", entity.transform)
         currentMesh!!.render(currentShader!!, GL20.GL_TRIANGLES)
-    }
-
-    private fun resetBindings() {
-        currentMaterialId = -1; currentMeshId = -1
-        currentShaderId = -1; currentTextureId = -1
     }
 
 }

@@ -3,7 +3,7 @@ package com.game
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Camera
 import com.badlogic.gdx.math.Vector3
-import com.game.util.EntitiesMap
+import com.game.util.DiagnosticTimer
 import kotlin.concurrent.thread
 
 internal class EngineCore(
@@ -13,7 +13,11 @@ internal class EngineCore(
     private val entitiesList = mutableListOf<Entity>()
 
     private val lock = java.lang.Object()
+    private val unlock = java.lang.Object()
+
     @Volatile private var running = true
+
+    val diagnosticTimer = DiagnosticTimer()
 
     // tmp
 
@@ -26,56 +30,60 @@ internal class EngineCore(
 
     private val tmp = Vector3()
 
-    fun updateEntities(camera: Camera): List<Entity> {
-        synchronized(lock) {
-            // update camera
-            cameraPrefs.update(camera)
-            // fill up rendering buffer
-            entitiesBuffer.clear()
-            orderBuffer.forEach {
-                entitiesBuffer.add(entitiesList[it]) }
-            // start updating
-            lock.notifyAll()
-        }
+    fun waitForEntities(camera: Camera): List<Entity> {
+        // wait for update end
+        synchronized(unlock) { unlock.wait() }
+        // update camera
+        cameraPrefs.update(camera)
+        // fill up rendering buffer
+        entitiesBuffer.clear()
+        orderBuffer.forEach { entitiesBuffer.add(entitiesList[it]) }
         return entitiesBuffer
     }
 
+    fun requestUpdate() {
+        synchronized(lock) { lock.notifyAll() }
+    }
+
     private fun update() {
-        diagnostic.beginUpdate()
+        diagnosticTimer.startTimer()
 
         // Update
         val delta = Gdx.graphics.deltaTime
 
         finalList.clear()
+        entitiesList.forEach {
+            it.update(delta)
+        }
+//        diagnostic.endUpdate()
+//        diagnostic.beginSort()
         entitiesList.forEachIndexed { index, entity ->
-            entity.update(delta)
             val distance = cameraPrefs.position.dst(entity.transform.getTranslation(tmp))
             if (distance < cameraPrefs.far) {
                 finalList.add(RenderUtil.getRenderKey(
                         entity.renderable.renderingKey, distance / cameraPrefs.far) to index)
             }
         }
-
-        diagnostic.beginSort()
         orderBuffer.clear()
         SortUtility.keysQsort(finalList)
                 .asReversed()
                 .forEach { orderBuffer.add(it.second) }
-        diagnostic.endSort()
-
-        diagnostic.endUpdate()
+        diagnosticTimer.stopTimer()
     }
 
     private fun updateLoop() {
         synchronized(lock) {
             lock.wait()
             update()
+            unlock.notifyAll()
         }
     }
 
     fun addEntity(entity: Entity) {
         entitiesList.add(entity)
     }
+
+    fun getUpdateTime() = diagnosticTimer.elapsedTime
 
     fun dispose() {
         running = false
