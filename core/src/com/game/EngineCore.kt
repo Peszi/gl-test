@@ -30,19 +30,19 @@ internal class EngineCore(
 
     private val tmp = Vector3()
 
+    @Synchronized
     fun waitForEntities(camera: Camera): List<Entity> {
         // wait for update end
-        synchronized(unlock) { unlock.wait() }
-        // update camera
-        cameraPrefs.update(camera)
-        // fill up rendering buffer
-        entitiesBuffer.clear()
-        orderBuffer.forEach { entitiesBuffer.add(entitiesList[it]) }
-        return entitiesBuffer
-    }
+        synchronized(lock) {
+            // update camera
+            cameraPrefs.update(camera)
+            // fill up rendering buffer
+            entitiesBuffer.clear()
+            orderBuffer.forEach { entitiesBuffer.add(entitiesList[it]) }
 
-    fun requestUpdate() {
-        synchronized(lock) { lock.notifyAll() }
+            lock.notifyAll()
+        }
+        return entitiesBuffer
     }
 
     private fun update() {
@@ -75,7 +75,6 @@ internal class EngineCore(
         synchronized(lock) {
             lock.wait()
             update()
-            unlock.notifyAll()
         }
     }
 

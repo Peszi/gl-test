@@ -1,6 +1,8 @@
 package com.game
 
-internal class CoreEngine {
+import kotlinx.coroutines.experimental.async
+
+internal class Engine {
 
     val resources = EngineResourcesImpl()
 
@@ -17,13 +19,17 @@ internal class CoreEngine {
     }
 
     fun render() {
+        // update logic 1
+        // render logic 1
+        // request frame
+
+
         // update
         val entities = engineLoop.waitForEntities(renderer.gameCamera.camera)
         engineLoop.diagnosticTimer.elapsedTime
-        engineLoop.requestUpdate()
 
         renderer.render(entities)
-        renderer.diagnosticTimer.elapsedTime
+        println("frame ${renderer.diagnosticTimer.elapsedTime}")
     }
 
     fun dispose() {

@@ -8,7 +8,7 @@ import java.util.*
 
 class GlMain : ApplicationAdapter() {
 
-    private val coreEngine = CoreEngine()
+    private val coreEngine = Engine()
 
     override fun create() {
         coreEngine.create()

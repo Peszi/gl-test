@@ -11,27 +11,17 @@ import kotlin.concurrent.schedule
 
 internal class EngineRenderer(
         private val engineResources: EngineResources
-) {
+): RenderInterface {
 
     var gameCamera: GameCamera = GameCamera()
-
-    private var currentMaterial: MaterialResource? = null
-    private var currentMesh: Mesh? = null
-    private var currentShader: ShaderProgram? = null
-    private var currentTexture: Texture? = null
-
-    private var currentMaterialId: Int = -1
-    private var currentMeshId: Int = -1
-    private var currentShaderId: Int = -1
-    private var currentTextureId: Int = -1
-
-    val diagnosticTimer = DiagnosticTimer()
+    private val prefs = RenderingPrefs()
+    private val lock = java.lang.Object()
 
     // Stats
 
+    val diagnosticTimer = DiagnosticTimer()
     var materialSwitches: Int = 0
     var meshSwitches: Int = 0
-
     var elapsedTime = 0f
 
     init {
@@ -62,7 +52,12 @@ internal class EngineRenderer(
         gameCamera.update(Gdx.graphics.deltaTime)
     }
 
+    override fun requestFrame() {
+        synchronized(lock) { lock.notifyAll() }
+    }
+
     fun render(entitiesList: List<Entity>) {
+        synchronized(lock) { lock.wait() }
         diagnosticTimer.startTimer()
         update(Gdx.graphics.deltaTime)
         elapsedTime += Gdx.graphics.deltaTime
@@ -70,14 +65,9 @@ internal class EngineRenderer(
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT or GL20.GL_DEPTH_BUFFER_BIT)
         // Render
         entitiesList.forEach(this::renderEntities)
-        afterFrame()
-        diagnosticTimer.stopTimer()
-    }
-
-    private fun afterFrame() {
-        currentMaterialId = -1; currentMeshId = -1
-        currentShaderId = -1; currentTextureId = -1
+        prefs.reset()
         Gdx.graphics.requestRendering()
+        diagnosticTimer.stopTimer()
     }
 
     fun printDiag() {
@@ -87,44 +77,67 @@ internal class EngineRenderer(
 
     private fun renderEntities(entity: Entity) {
         val materialId = entity.renderable.materialId
-        if (currentMaterialId != materialId) {
+        if (prefs.currentMaterialId != materialId) {
             materialSwitches++
-            currentMaterial = engineResources.getMaterial(materialId)
-            currentMaterialId = materialId
+            prefs.currentMaterial = engineResources.getMaterial(materialId)
+            prefs.currentMaterialId = materialId
 
-            val textureId = currentMaterial!!.textureId
-            if (currentTextureId != textureId) {
-                currentTexture = engineResources.getTexture(currentMaterial!!.textureId)
-                currentTexture!!.bind()
-                currentTextureId = textureId
+            val textureId = prefs.currentMaterial!!.textureId
+            if (prefs.currentTextureId != textureId) {
+                prefs.currentTexture = engineResources.getTexture(prefs.currentMaterial!!.textureId)
+                prefs.currentTexture!!.bind()
+                prefs.currentTextureId = textureId
             }
 
-            val shaderId = currentMaterial!!.shaderId
-            if (currentShaderId != shaderId) {
-                if (currentShaderId > 0) currentShader!!.end()
-                currentShader = engineResources.getShader(currentMaterial!!.shaderId)
-                currentShader!!.begin()
-                currentShader!!.setUniformMatrix("u_projTrans", gameCamera.camera.combined)
-                currentShader!!.setUniformf("u_cameraPos", gameCamera.camera.position)
-                currentShader!!.setUniformf("u_time", elapsedTime * 10f)
-                currentShaderId = shaderId
+            val shaderId = prefs.currentMaterial!!.shaderId
+            if (prefs.currentShaderId != shaderId) {
+                if (prefs.currentShaderId > 0) prefs.currentShader!!.end()
+                prefs.currentShader = engineResources.getShader(prefs.currentMaterial!!.shaderId)
+                prefs.currentShader!!.begin()
+                prefs.currentShader!!.setUniformMatrix("u_projTrans", gameCamera.camera.combined)
+                prefs.currentShader!!.setUniformf("u_cameraPos", gameCamera.camera.position)
+                prefs.currentShader!!.setUniformf("u_time", elapsedTime * 10f)
+                prefs.currentShaderId = shaderId
             }
 
-            currentShader!!.setUniformf("u_color", currentMaterial!!.color)
-            currentShader!!.setUniformi("u_texture", 0)
+            prefs.currentShader!!.setUniformf("u_color", prefs.currentMaterial!!.color)
+            prefs.currentShader!!.setUniformi("u_texture", 0)
         }
 
         val meshId = entity.renderable.meshId
-        if (currentMeshId != meshId) {
+        if (prefs.currentMeshId != meshId) {
             meshSwitches++
-            if (currentMeshId > 0) currentMesh!!.unbind(currentShader)
-            currentMesh = engineResources.getModel(entity.renderable.meshId)
-            currentMesh!!.bind(currentShader)
-            currentMeshId = meshId
+            if (prefs.currentMeshId > 0) prefs.currentMesh!!.unbind(prefs.currentShader)
+            prefs.currentMesh = engineResources.getModel(entity.renderable.meshId)
+            prefs.currentMesh!!.bind(prefs.currentShader)
+            prefs.currentMeshId = meshId
         }
 
-        currentShader!!.setUniformMatrix("u_worldTrans", entity.transform)
-        currentMesh!!.render(currentShader!!, GL20.GL_TRIANGLES)
+        prefs.currentShader!!.setUniformMatrix("u_worldTrans", entity.transform)
+        prefs.currentMesh!!.render(prefs.currentShader!!, GL20.GL_TRIANGLES)
+    }
+
+}
+
+internal interface RenderInterface {
+    fun requestFrame()
+}
+
+internal class RenderingPrefs {
+
+    var currentMaterial: MaterialResource? = null
+    var currentMesh: Mesh? = null
+    var currentShader: ShaderProgram? = null
+    var currentTexture: Texture? = null
+
+    var currentMaterialId: Int = -1
+    var currentMeshId: Int = -1
+    var currentShaderId: Int = -1
+    var currentTextureId: Int = -1
+
+    fun reset() {
+        currentMaterialId = -1; currentMeshId = -1
+        currentShaderId = -1; currentTextureId = -1
     }
 
 }

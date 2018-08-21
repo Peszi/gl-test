@@ -9,8 +9,7 @@ internal interface Diagnostic {
 
 internal class DiagnosticImpl: Diagnostic {
 
-    private var diagnosticTimer =
-            Timer().schedule(0, 1000){ printDiagnostic() }
+    private var diagnosticTimer: TimerTask? = null
 
     @Volatile private var framesCount = 0
     @Volatile private var updatesCount = 0
@@ -33,8 +32,7 @@ internal class DiagnosticImpl: Diagnostic {
         if (enable) {
             diagnosticTimer = Timer().schedule(0, 1000){ printDiagnostic() }
         } else {
-            diagnosticTimer.run()
-            diagnosticTimer.cancel()
+            diagnosticTimer?.cancel()
         }
     }
 
