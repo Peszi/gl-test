@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.*
 import com.badlogic.gdx.math.Matrix4
 import com.badlogic.gdx.math.Vector3
 import java.util.*
+import kotlin.concurrent.thread
 
 class GlMain : ApplicationAdapter() {
 
@@ -12,7 +13,6 @@ class GlMain : ApplicationAdapter() {
 
     override fun create() {
         coreEngine.create()
-
         // Shaders
         val defaultShaderId = coreEngine.resources.loadShader("shaders/simple")
 
@@ -49,6 +49,9 @@ class GlMain : ApplicationAdapter() {
             }
             coreEngine.addEntity(Entity(translate, renderable, false))
         }
+
+        Log.info("Loaded entities!!!")
+        coreEngine.start()
     }
 
     override fun resize(width: Int, height: Int) {

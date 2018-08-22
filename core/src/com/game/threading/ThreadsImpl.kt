@@ -6,12 +6,6 @@ internal class ThreadsImpl: ThreadsInterface {
 
     private var jobsExecutor = Executors.newWorkStealingPool()
 
-    init {
-        while (true) {
-
-        }
-    }
-
     @Synchronized
     override fun runJobs(jobs: List<JobDesc>, counter: AtomicCounter?) {
         jobs.forEach{

@@ -90,9 +90,7 @@ internal class EngineCore(
 
     init {
         thread {
-            while (true) {
-                updateLoop()
-            }
+            while (true) { updateLoop() }
 //            var loopTime = 0L
 //            var lastTime = System.currentTimeMillis()
 //            while (running) {

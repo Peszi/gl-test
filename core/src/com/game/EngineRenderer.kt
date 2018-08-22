@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.glutils.ShaderProgram
 import com.game.util.DiagnosticTimer
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.schedule
 
 internal class EngineRenderer(
@@ -16,6 +17,10 @@ internal class EngineRenderer(
     var gameCamera: GameCamera = GameCamera()
     private val prefs = RenderingPrefs()
     private val lock = java.lang.Object()
+    private val unlock = java.lang.Object()
+    val busy = AtomicBoolean(true)
+
+    val entitiesList = mutableListOf<Entity>()
 
     // Stats
 
@@ -41,7 +46,6 @@ internal class EngineRenderer(
         Timer().schedule(0, 1000){ printDiag() }
 
         Gdx.graphics.isContinuousRendering = false
-        Gdx.graphics.requestRendering()
     }
 
     fun resize(width: Float, height: Float) {
@@ -52,12 +56,29 @@ internal class EngineRenderer(
         gameCamera.update(Gdx.graphics.deltaTime)
     }
 
-    override fun requestFrame() {
-        synchronized(lock) { lock.notifyAll() }
+    override fun requestFrame(entities: List<Entity>) {
+        Log.info("[UPDATE] request ...")
+        if (busy.get()) {
+            Log.info("[UPDATE] WAIT !!!")
+            synchronized(unlock) { unlock.wait() }
+        }
+        Log.info("[UPDATE] UNLOCK rendering ...")
+        synchronized(lock) {
+            if (busy.compareAndSet(false, true)) {
+                lock.notifyAll()
+            }
+        }
     }
 
-    fun render(entitiesList: List<Entity>) {
+    fun render() {
+        synchronized(unlock) {
+            busy.set(false)
+            Log.info("[RENDER] END !!!")
+            unlock.notifyAll()
+        }
+        Log.info("[RENDER] WAIT !!!")
         synchronized(lock) { lock.wait() }
+        Log.info("[RENDER] rendering STARTED ...")
         diagnosticTimer.startTimer()
         update(Gdx.graphics.deltaTime)
         elapsedTime += Gdx.graphics.deltaTime
@@ -120,7 +141,7 @@ internal class EngineRenderer(
 }
 
 internal interface RenderInterface {
-    fun requestFrame()
+    fun requestFrame(entities: List<Entity>)
 }
 
 internal class RenderingPrefs {
