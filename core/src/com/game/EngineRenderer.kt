@@ -11,7 +11,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.schedule
 
 internal class EngineRenderer(
-        private val engineResources: EngineResources
+        private val engineResources: EngineResources,
+        private val diagnostic: Diagnostic
 ): RenderInterface {
 
     var gameCamera: GameCamera = GameCamera()
@@ -57,38 +58,28 @@ internal class EngineRenderer(
     }
 
     override fun requestFrame(entities: List<Entity>) {
-        Log.info("[UPDATE] request ...")
-        if (busy.get()) {
-            Log.info("[UPDATE] WAIT !!!")
-            synchronized(unlock) { unlock.wait() }
-        }
-        Log.info("[UPDATE] UNLOCK rendering ...")
-        synchronized(lock) {
-            if (busy.compareAndSet(false, true)) {
-                lock.notifyAll()
-            }
-        }
+        entitiesList.clear()
+        entitiesList.addAll(entities)
+        synchronized(lock) { lock.notifyAll() }
+        synchronized(unlock) { unlock.wait() }
     }
 
     fun render() {
-        synchronized(unlock) {
-            busy.set(false)
-            Log.info("[RENDER] END !!!")
-            unlock.notifyAll()
+        synchronized(unlock) { unlock.notifyAll() }
+        synchronized(lock) {
+            lock.wait()
+            val startTime = DiagnosticTimer.getTimeStamp()
+            update(Gdx.graphics.deltaTime)
+            elapsedTime += Gdx.graphics.deltaTime
+            // Clean up
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT or GL20.GL_DEPTH_BUFFER_BIT)
+            // Render
+            entitiesList.forEach(this::renderEntities)
+            prefs.reset()
+            Gdx.graphics.requestRendering()
+            diagnosticTimer.stopTimer()
+            diagnostic.onRenderEnd(startTime, DiagnosticTimer.getTimeStamp())
         }
-        Log.info("[RENDER] WAIT !!!")
-        synchronized(lock) { lock.wait() }
-        Log.info("[RENDER] rendering STARTED ...")
-        diagnosticTimer.startTimer()
-        update(Gdx.graphics.deltaTime)
-        elapsedTime += Gdx.graphics.deltaTime
-        // Clean up
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT or GL20.GL_DEPTH_BUFFER_BIT)
-        // Render
-        entitiesList.forEach(this::renderEntities)
-        prefs.reset()
-        Gdx.graphics.requestRendering()
-        diagnosticTimer.stopTimer()
     }
 
     fun printDiag() {

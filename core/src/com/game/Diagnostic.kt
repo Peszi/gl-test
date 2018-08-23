@@ -1,31 +1,48 @@
 package com.game
 
+import com.game.diag.ProfilerTool
+import java.lang.invoke.SwitchPoint
 import java.util.*
 import kotlin.concurrent.schedule
 
 internal interface Diagnostic {
     fun enableDiagnostic(enable: Boolean)
+    fun setRenderData(time: Float, meshSwitches: Int, materialSwitches: Int)
+
+    fun onGameLogicEnd(startTime: Long, endTime: Long)
+    fun onRenderEnd(startTime: Long, endTime: Long)
 }
 
-internal class DiagnosticImpl: Diagnostic {
+internal class DiagnosticImpl(
+        private val profiler: ProfilerTool
+): Diagnostic {
 
     private var diagnosticTimer: TimerTask? = null
 
-    @Volatile private var framesCount = 0
-    @Volatile private var updatesCount = 0
+    var meshSwitches: Int = 0
+    var materialSwitches: Int = 0
 
-    @Volatile var updateTime = 0f
-    @Volatile var renderTime = 0f
-    @Volatile var sortTime = 0f
+    private val updateSamples = mutableListOf<TimeSample>()
+    private val renderSamples = mutableListOf<TimeSample>()
+
+    init {
+        enableDiagnostic(true)
+    }
 
     private fun printDiagnostic() {
-        val diagnosticMessage = "fps $framesCount updates $updatesCount " +
-                        "frame ${renderTime.format(2)}/${EngineCore.TARGET_FRAME_TIME.format(2)}ms " +
-                        "update: ${updateTime.format(2)}ms " +
-                        "sort: ${sortTime.format(2)}ms "
-        if (renderTime <= EngineCore.TARGET_FRAME_TIME) println(diagnosticMessage) else System.err.println(diagnosticMessage)
-        updatesCount = 0
-        framesCount = 0
+        updateProfiler()
+    }
+
+    private fun updateProfiler() {
+        if (profiler.isVisible) {
+            synchronized(updateSamples) {
+                profiler.samplesPanel.updateBuffer(0, updateSamples)
+                updateSamples.clear() }
+            synchronized(renderSamples) {
+                profiler.samplesPanel.updateBuffer(2, renderSamples)
+                renderSamples.clear() }
+            profiler.samplesPanel.repaint()
+        }
     }
 
     override fun enableDiagnostic(enable: Boolean) {
@@ -36,10 +53,25 @@ internal class DiagnosticImpl: Diagnostic {
         }
     }
 
-    companion object {
+    override fun setRenderData(time: Float, meshSwitches: Int, materialSwitches: Int) {
+        synchronized(this) {
+            this.meshSwitches = meshSwitches
+            this.materialSwitches = materialSwitches
+        }
+    }
 
-        fun Float.format(digits: Int) =
-                java.lang.String.format("%.${digits}f", this)
+    override fun onGameLogicEnd(startTime: Long, endTime: Long) {
+        synchronized(updateSamples) {
+            updateSamples.add(TimeSample(startTime, endTime)) }
+    }
 
+    override fun onRenderEnd(startTime: Long, endTime: Long) {
+        synchronized(renderSamples) {
+            renderSamples.add(TimeSample(startTime, endTime)) }
     }
 }
+
+internal class TimeSample(
+        val start: Long,
+        val end: Long
+)
