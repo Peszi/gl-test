@@ -1,7 +1,5 @@
-package com.game
+package com.game.diag
 
-import com.game.diag.ProfilerTool
-import java.lang.invoke.SwitchPoint
 import java.util.*
 import kotlin.concurrent.schedule
 
@@ -9,7 +7,8 @@ internal interface Diagnostic {
     fun enableDiagnostic(enable: Boolean)
     fun setRenderData(time: Float, meshSwitches: Int, materialSwitches: Int)
 
-    fun onGameLogicEnd(startTime: Long, endTime: Long)
+    fun onUpdateEnd(startTime: Long, endTime: Long)
+    fun onSortEnd(startTime: Long, endTime: Long)
     fun onRenderEnd(startTime: Long, endTime: Long)
 }
 
@@ -23,6 +22,7 @@ internal class DiagnosticImpl(
     var materialSwitches: Int = 0
 
     private val updateSamples = mutableListOf<TimeSample>()
+    private val sortSamples = mutableListOf<TimeSample>()
     private val renderSamples = mutableListOf<TimeSample>()
 
     init {
@@ -38,6 +38,9 @@ internal class DiagnosticImpl(
             synchronized(updateSamples) {
                 profiler.samplesPanel.updateBuffer(0, updateSamples)
                 updateSamples.clear() }
+            synchronized(sortSamples) {
+                profiler.samplesPanel.updateBuffer(1, sortSamples)
+                sortSamples.clear() }
             synchronized(renderSamples) {
                 profiler.samplesPanel.updateBuffer(2, renderSamples)
                 renderSamples.clear() }
@@ -60,9 +63,14 @@ internal class DiagnosticImpl(
         }
     }
 
-    override fun onGameLogicEnd(startTime: Long, endTime: Long) {
+    override fun onUpdateEnd(startTime: Long, endTime: Long) {
         synchronized(updateSamples) {
             updateSamples.add(TimeSample(startTime, endTime)) }
+    }
+
+    override fun onSortEnd(startTime: Long, endTime: Long) {
+        synchronized(sortSamples) {
+            sortSamples.add(TimeSample(startTime, endTime)) }
     }
 
     override fun onRenderEnd(startTime: Long, endTime: Long) {

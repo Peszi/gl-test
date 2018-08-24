@@ -1,31 +1,18 @@
-package com.game
+package com.game.entity
 
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.math.Matrix4
 import com.badlogic.gdx.math.Vector3
-import java.util.*
+import com.game.core.EngineCore
+import com.game.render.RenderUtil
 
-internal class Entity(
-        var transform: Matrix4 = Matrix4().idt(),
-        var renderable: RenderComponent = RenderComponent(),
-        var isStatic: Boolean = false
-) {
+internal open class RenderableEntity(
+        var renderable: RenderComponent = RenderComponent()
+): Entity() {
 
-    private val direction = transform.getTranslation(Vector3()).nor()
+    override fun input(delta: Float, engineCore: EngineCore) {}
 
-    var tmp = Vector3()
-
-    fun update(delta: Float) {
-        if (!isStatic)
-            transform.translate(tmp.set(direction).scl(delta * .002f))
-    }
-
-    fun clone() =
-            Entity(transform, renderable, isStatic)
-
-    companion object {
-        fun build() {}
-    }
+    override fun update(delta: Float) {}
 }
 
 internal class RenderComponent(

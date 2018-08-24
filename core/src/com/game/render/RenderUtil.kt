@@ -1,4 +1,6 @@
-package com.game
+package com.game.render
+
+import com.game.entity.MaterialResource
 
 internal object RenderUtil {
 
@@ -34,7 +36,7 @@ internal object RenderUtil {
 
     fun getRenderKey(currentKey: Long, entityDepth: Float): Long {
         var depth: Long = (entityDepth * THREE_BYTES_MASK).toLong()
-        val isTransparent = RenderUtil.isTransparent(currentKey)
+        val isTransparent = isTransparent(currentKey)
 //        // entityDepth
         if (!isTransparent) depth = 0x0 // THREE_BYTES_MASK - depth
         val value = depth.shl(getDepthOffset(isTransparent))

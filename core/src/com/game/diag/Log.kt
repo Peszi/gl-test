@@ -1,7 +1,6 @@
-package com.game
+package com.game.diag
 
 import java.time.Instant
-import java.time.temporal.ChronoUnit
 
 internal object Log {
 

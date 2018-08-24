@@ -1,13 +1,11 @@
-package com.game
+package com.game.engine
 
 import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.Mesh
 import com.badlogic.gdx.graphics.Texture
-import com.badlogic.gdx.graphics.g3d.Model
-import com.badlogic.gdx.graphics.g3d.Shader
 import com.badlogic.gdx.graphics.g3d.loader.ObjLoader
 import com.badlogic.gdx.graphics.glutils.ShaderProgram
+import com.game.entity.MaterialResource
 
 internal interface EngineResources {
     fun loadShader(shaderName: String): Int
