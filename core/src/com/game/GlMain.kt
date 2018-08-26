@@ -32,7 +32,7 @@ class GlMain : ApplicationAdapter() {
         val tombstoneModelId = engineCore.resources.loadModel("models/tombstone.obj")
 
         val random = Random()
-        val objectsCount = 20_000 // 30_000
+        val objectsCount = 30_000 // 30_000
         val translateLimit = objectsCount / 140
 
         val renderComponentA = RenderComponent.build(boxModelId, transparentMaterialId)
@@ -56,7 +56,7 @@ class GlMain : ApplicationAdapter() {
                     )
         }
 
-        Log.info("Loaded entities!!!")
+        Log.info("starting threads ..")
         engineCore.create()
     }
 

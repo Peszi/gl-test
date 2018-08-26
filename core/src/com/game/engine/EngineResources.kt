@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Mesh
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g3d.loader.ObjLoader
 import com.badlogic.gdx.graphics.glutils.ShaderProgram
+import com.game.diag.Log
 import com.game.entity.MaterialResource
 
 internal interface EngineResources {
@@ -32,26 +33,26 @@ internal class EngineResourcesImpl: EngineResources {
     private var objLoader = ObjLoader()
 
     override fun loadShader(shaderName: String): Int {
-        println("loading shader [$shaderName]")
+        Log.info("loading shader [$shaderName]")
         val shaderProgram = ShaderProgram(
                 Gdx.files.internal("${shaderName}Vertex.glsl").readString(),
                 Gdx.files.internal("${shaderName}Fragment.glsl").readString()
         )
         if (!shaderProgram.isCompiled)
             throw RuntimeException(shaderProgram.log)
-        shaderProgram.uniforms.map { " - $it" }.forEach(System.out::println)
+//        shaderProgram.uniforms.map { " - $it" }.forEach(System.out::println) // printing all shader uniforms
         shadersBuffer.add(shaderProgram)
         return shadersBuffer.size-1
     }
 
     override fun loadTexture(textureName: String): Int {
-        println("loading texture [$textureName]")
+        Log.info("loading texture [$textureName]")
         texturesBuffer.add(Texture(Gdx.files.internal(textureName), true))
         return texturesBuffer.size-1
     }
 
     override fun loadModel(modelName: String): Int {
-        println("loading model [$modelName]")
+        Log.info("loading model [$modelName]")
         val mesh = objLoader.loadModel(Gdx.files.internal(modelName)).meshes.first()
         mesh.setAutoBind(false)
         modelsBuffer.add(mesh)
@@ -59,8 +60,8 @@ internal class EngineResourcesImpl: EngineResources {
     }
 
     override fun addMaterial(material: MaterialResource): Pair<Int, MaterialResource> {
-        println("prepaing material!")
         materialsBuffer.add(material)
+        Log.info("preparing material ID: ${materialsBuffer.size-1}")
         return materialsBuffer.size-1 to material
     }
 

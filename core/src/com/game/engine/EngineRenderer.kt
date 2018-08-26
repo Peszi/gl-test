@@ -10,6 +10,7 @@ import com.game.data.RenderBuffer
 import com.game.diag.DiagTimer
 import com.game.entity.MaterialResource
 import com.game.diag.Diagnostic
+import com.game.diag.Log
 import com.game.render.GameCamera
 import java.util.*
 import kotlin.concurrent.schedule
@@ -112,7 +113,7 @@ internal class EngineRenderer(
     }
 
     fun printDiag() {
-        println("switches per frame: material = $materialSwitches mesh = $meshSwitches")
+        Log.info("switches per frame: material = $materialSwitches mesh = $meshSwitches")
         materialSwitches = 0; meshSwitches = 0
     }
 }
