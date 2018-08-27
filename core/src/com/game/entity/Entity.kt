@@ -7,8 +7,8 @@ internal open abstract class Entity(
         var transform: Matrix4 = Matrix4().idt()
 ) {
 
-    abstract fun input(delta: Float, engineCore: EngineCore)
+    open fun start(engineCore: EngineCore) {}
 
-    abstract fun update(delta: Float)
+    abstract fun update(delta: Float, engineCore: EngineCore)
 
 }

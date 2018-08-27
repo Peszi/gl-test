@@ -19,7 +19,7 @@ internal class ProfilerTool: JFrame("Profiler") {
         add(samplesPanel)
         pack()
         setLocationRelativeTo(null)
-        isVisible = true
+        isVisible = false
     }
 
     fun toggleFrame() {
@@ -35,14 +35,23 @@ internal class SamplesPanel(val frame: JFrame): KeyListener, JPanel()  {
     private val WAITING_COLOR = Color(168, 63, 63)
     private val BACKGROUND_COLOR = Color(32, 32, 32)
 
+    private val COLORS = listOf(
+            Color(168, 115, 63),
+            Color(168, 168, 63),
+            Color(82, 168, 63),
+            Color(63, 168, 152),
+            Color(63, 92, 168),
+            Color(125, 63, 168)
+    )
+
     var running = true
     var vertical = false
     var zoom = 1f
     var position = 0f
 
     private var samplesBuffer = listOf(
-            mutableListOf<TimeSample>(),
-            mutableListOf<TimeSample>(),
+            mutableListOf(),
+            mutableListOf(),
             mutableListOf<TimeSample>()
     )
 
@@ -106,7 +115,7 @@ internal class SamplesPanel(val frame: JFrame): KeyListener, JPanel()  {
                         fullBusyTime += sampleTime
                         val sampleLength = sampleTime / frameTime.toFloat() * barLength
                         val samplePosition = (it.start - startTime) / frameTime.toFloat() * barLength
-                        g2d.color = BUSY_COLOR
+                        g2d.color = COLORS[it.frame]
                         g2d.fillRect(BAR_MARGIN + samplePosition.toInt(), BAR_MARGIN, sampleLength.toInt(), barHeight)
                         g2d.color = BACKGROUND_COLOR
                         g2d.drawLine(BAR_MARGIN + samplePosition.toInt(), BAR_MARGIN,
@@ -130,7 +139,7 @@ internal class SamplesPanel(val frame: JFrame): KeyListener, JPanel()  {
         }
     }
 
-    fun setupTitle() {
+    private fun setupTitle() {
         frame.title = "Profiler (zoom: ${zoom}x offset: ${(position * 100).toInt()}%) " + if (!running) "PAUSED" else ""
     }
 

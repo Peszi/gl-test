@@ -7,12 +7,19 @@ import com.badlogic.gdx.graphics.g3d.loader.ObjLoader
 import com.badlogic.gdx.graphics.glutils.ShaderProgram
 import com.game.diag.Log
 import com.game.entity.MaterialResource
+import java.util.*
 
 internal interface EngineResources {
     fun loadShader(shaderName: String): Int
     fun loadTexture(textureName: String): Int
     fun loadModel(modelName: String): Int
+    fun addModel(mesh: Mesh): Int
     fun addMaterial(material: MaterialResource): Pair<Int, MaterialResource>
+
+    fun getDefaultShader(): Int
+    fun getDefaultTexture(): Int
+    fun getDefaultMaterial(): Pair<Int, MaterialResource>
+    fun getDefaultModel(): Int
 
     fun getShader(shaderId: Int): ShaderProgram
     fun getTexture(textureId: Int): Texture
@@ -28,11 +35,12 @@ internal class EngineResourcesImpl: EngineResources {
     private val texturesBuffer = mutableListOf<Texture>()
     private val materialsBuffer = mutableListOf<MaterialResource>()
 
-    private val modelsBuffer = mutableListOf<Mesh>()
+    private val modelsBuffer = mutableListOf<Mesh>() //Collections.synchronizedList(())
 
     private var objLoader = ObjLoader()
 
     override fun loadShader(shaderName: String): Int {
+
         Log.info("loading shader [$shaderName]")
         val shaderProgram = ShaderProgram(
                 Gdx.files.internal("${shaderName}Vertex.glsl").readString(),
@@ -59,11 +67,26 @@ internal class EngineResourcesImpl: EngineResources {
         return modelsBuffer.size-1
     }
 
+    override fun addModel(mesh: Mesh): Int {
+        mesh.setAutoBind(false)
+        modelsBuffer.add(mesh)
+        Log.info("loading model ID ${modelsBuffer.size-1}")
+        return modelsBuffer.size-1
+    }
+
     override fun addMaterial(material: MaterialResource): Pair<Int, MaterialResource> {
         materialsBuffer.add(material)
         Log.info("preparing material ID: ${materialsBuffer.size-1}")
         return materialsBuffer.size-1 to material
     }
+
+    override fun getDefaultShader(): Int = 0
+
+    override fun getDefaultTexture(): Int = 0
+
+    override fun getDefaultMaterial(): Pair<Int, MaterialResource> = 0 to materialsBuffer[0]
+
+    override fun getDefaultModel(): Int = 0
 
     override fun getShader(shaderId: Int) =
             shadersBuffer.getOrNull(shaderId) ?: throw RuntimeException("Shader not exists!")

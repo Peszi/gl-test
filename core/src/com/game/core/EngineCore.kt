@@ -1,5 +1,6 @@
 package com.game.core
 
+import com.badlogic.gdx.math.Matrix4
 import com.badlogic.gdx.math.Vector3
 import com.game.diag.DiagnosticImpl
 import com.game.engine.EngineRenderer
@@ -8,8 +9,11 @@ import com.game.data.BlockingBuffer
 import com.game.data.EntitiesBuffer
 import com.game.data.RenderBuffer
 import com.game.diag.ProfilerTool
+import com.game.entity.Entity
+import com.game.render.MainCamera
 import com.main.threading.ThreadsImpl
 import com.main.threading.ThreadsInterface
+import java.util.concurrent.ArrayBlockingQueue
 
 internal class EngineCore {
 
@@ -21,10 +25,11 @@ internal class EngineCore {
     val coreThreads: ThreadsInterface = ThreadsImpl()
     lateinit var renderer: EngineRenderer
 
+    val state = GameState()
     val updateQueue = BlockingBuffer<RenderBuffer>()
     val renderQueue = BlockingBuffer<RenderBuffer>()
 
-    var elapsedTime = 0f
+    val camera: MainCamera = MainCamera()
 
     // Outer
     val resources = EngineResourcesImpl()
@@ -32,8 +37,7 @@ internal class EngineCore {
 
     // TMP
 
-    var position: Vector3 = Vector3()
-    var direction: Vector3 = Vector3(0f, 0f, -1f)
+    var frameIdx = 0
 
     fun create() {
         coreThreads.runJobs(listOf(GameInitJob(this)))
@@ -41,7 +45,7 @@ internal class EngineCore {
     }
 
     fun resize(width: Float, height: Float) {
-        renderer.resize(width, height)
+        camera.updateViewport(width, height)
     }
 
     fun render() {
@@ -51,4 +55,22 @@ internal class EngineCore {
     fun dispose() {
         resources.disposeResources()
     }
+}
+
+internal class GameState {
+
+    var position: Vector3 = Vector3()
+    var combined: Matrix4 = Matrix4()
+
+    var elapsedTime = 0f
+
+    fun update(delta: Float, engineCore: EngineCore) {
+        elapsedTime += delta
+        position = engineCore.camera.camera.position
+        combined = engineCore.camera.camera.combined
+    }
+
+    // TMP
+
+    var frameIdx = 0
 }

@@ -26,7 +26,7 @@ internal class BlockingBuffer<T> {
     }
 
     companion object {
-        const val CAPACITY = 2
+        const val CAPACITY = 1
     }
 
 }

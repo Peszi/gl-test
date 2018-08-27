@@ -19,7 +19,7 @@ void main() {
     vec3 tmp = a_position + normalize(a_position) * (sin(u_time) / 2.0) * 0.02;
     v_position = u_worldTrans * vec4(tmp, 1.0);
 
-     v_time = u_time + length(v_position);
+     v_time = u_time * 10 + length(v_position);
 
 //    float transition = min(length(u_cameraPos - v_position.xyz), 100.0) / 100.0;
 //    v_color = vec4(mix(vec3(1f, 0f, 0f), vec3(0f, 0f, 1f), transition) * u_color, u_color.a);

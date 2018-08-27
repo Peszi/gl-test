@@ -7,9 +7,9 @@ internal interface Diagnostic {
     fun enableDiagnostic(enable: Boolean)
     fun setRenderData(time: Float, meshSwitches: Int, materialSwitches: Int)
 
-    fun onUpdateEnd(startTime: Long, endTime: Long)
-    fun onSortEnd(startTime: Long, endTime: Long)
-    fun onRenderEnd(startTime: Long, endTime: Long)
+    fun onUpdateEnd(sample: TimeSample)
+    fun onSortEnd(sample: TimeSample)
+    fun onRenderEnd(sample: TimeSample)
 }
 
 internal class DiagnosticImpl(
@@ -63,23 +63,24 @@ internal class DiagnosticImpl(
         }
     }
 
-    override fun onUpdateEnd(startTime: Long, endTime: Long) {
+    override fun onUpdateEnd(sample: TimeSample) {
         synchronized(updateSamples) {
-            updateSamples.add(TimeSample(startTime, endTime)) }
+            updateSamples.add(sample) }
     }
 
-    override fun onSortEnd(startTime: Long, endTime: Long) {
+    override fun onSortEnd(sample: TimeSample) {
         synchronized(sortSamples) {
-            sortSamples.add(TimeSample(startTime, endTime)) }
+            sortSamples.add(sample) }
     }
 
-    override fun onRenderEnd(startTime: Long, endTime: Long) {
+    override fun onRenderEnd(sample: TimeSample) {
         synchronized(renderSamples) {
-            renderSamples.add(TimeSample(startTime, endTime)) }
+            renderSamples.add(sample) }
     }
 }
 
 internal class TimeSample(
         val start: Long,
-        val end: Long
+        val end: Long,
+        val frame: Int
 )

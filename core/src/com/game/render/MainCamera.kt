@@ -2,9 +2,9 @@ package com.game.render
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.PerspectiveCamera
-import com.badlogic.gdx.math.Vector3
+import com.game.core.GameState
 
-internal class GameCamera {
+internal class MainCamera {
 
     companion object {
         const val CAMERA_FAR = 500.0f
@@ -26,12 +26,6 @@ internal class GameCamera {
         camera.viewportWidth = width
         camera.viewportHeight = height
         Gdx.gl.glViewport(0, 0, camera.viewportWidth.toInt(), camera.viewportHeight.toInt())
-    }
-
-    fun updateCamera(position: Vector3, direction: Vector3) {
-        camera.position.set(position)
-        camera.direction.set(direction)
-        camera.update()
     }
 
 }

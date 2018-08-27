@@ -20,11 +20,7 @@ internal class KinematicEntity(
     private val direction = transform.getTranslation(Vector3()).nor()
     private var tmp = Vector3()
 
-    override fun input(delta: Float, engineCore: EngineCore) {
-
-    }
-
-    override fun update(delta: Float) {
+    override fun update(delta: Float, engineCore: EngineCore) {
         transform.translate(tmp.set(direction).scl(delta * .002f))
     }
 }

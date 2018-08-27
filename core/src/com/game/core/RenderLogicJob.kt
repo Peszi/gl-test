@@ -3,10 +3,10 @@ package com.game.core
 import com.badlogic.gdx.math.Vector3
 import com.game.data.RenderBuffer
 import com.game.data.RenderData
-import com.game.data.RenderPrefs
-import com.game.render.GameCamera
+import com.game.render.MainCamera
 import com.game.render.RenderUtil
 import com.game.diag.DiagTimer
+import com.game.diag.TimeSample
 import com.main.threading.JobDesc
 
 internal class RenderLogicJob(
@@ -18,22 +18,22 @@ internal class RenderLogicJob(
                 val startTime = DiagTimer.getTimeStamp()
                 val keysBuffer: MutableList<Pair<Long, RenderData>> = mutableListOf()
 
-                var renderPrefs: RenderPrefs? = null
+                var gameState: GameState? = null
                 engineCore.updateQueue.processData {
-                    renderPrefs = this.renderPrefs
+                    gameState = this.gameState
                     this.renderableList.forEach {
                         val distance = Vector3(0f, 0f, 0f).dst(it.transform.getTranslation(tmp)) // TODO tmp
-                        if (distance < GameCamera.CAMERA_FAR) {
+                        if (distance < MainCamera.CAMERA_FAR) {
                             keysBuffer.add(RenderUtil.getRenderKey(
-                                    it.renderable.renderingKey, distance / GameCamera.CAMERA_FAR) to it)
+                                    it.renderable.renderingKey, distance / MainCamera.CAMERA_FAR) to it)
                         }
                     }
                 }
 
                 val renderList = keysQsort(keysBuffer).map { it.second }.asReversed()
-                engineCore.diagnostic.onSortEnd(startTime, DiagTimer.getTimeStamp())
+                engineCore.diagnostic.onSortEnd(TimeSample(startTime, DiagTimer.getTimeStamp(), gameState?.frameIdx ?: 0))
 
-                renderPrefs?.let {
+                gameState?.let {
                     engineCore.renderQueue.insertData(RenderBuffer(it, renderList)) }
             }
         }
