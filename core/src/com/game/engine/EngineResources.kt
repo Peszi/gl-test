@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.glutils.ShaderProgram
 import com.badlogic.gdx.math.collision.BoundingBox
 import com.game.diag.Log
 import com.game.entity.MaterialResource
+import java.util.*
 
 internal interface EngineResources {
     fun loadShader(shaderName: String): Int
@@ -39,7 +40,7 @@ internal class EngineResourcesImpl: EngineResources {
     private val texturesBuffer = mutableListOf<Texture>()
     private val materialsBuffer = mutableListOf<MaterialResource>()
 
-    private val modelsBuffer = mutableListOf<Mesh>() //Collections.synchronizedList(())
+    private val modelsBuffer = Collections.synchronizedList(mutableListOf<Mesh>())
     private val boundingBuffer = mutableListOf<BoundingBox>()
 
     private var objLoader = ObjLoader()

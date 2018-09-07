@@ -57,6 +57,31 @@ internal class CameraController: Entity() {
             transform = engineCore.mainCamera.camera.view.cpy()
             Matrix4.inv(transform.values)
         }
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.T)) {
+            val vertices = mutableListOf<Float>()
+            val planePoints = engineCore.mainCamera.camera.frustum.planePoints
+
+            // Near
+            listOf(
+                    planePoints[0], planePoints[1], planePoints[1], planePoints[2],
+                    planePoints[2], planePoints[3], planePoints[3], planePoints[0]
+            ).forEach { vertices.addAll(listOf(it.x, it.y, it.z)) }
+
+            // Far
+            listOf(
+                    planePoints[4], planePoints[5], planePoints[5], planePoints[6],
+                    planePoints[6], planePoints[7], planePoints[7], planePoints[4]
+            ).forEach { vertices.addAll(listOf(it.x, it.y, it.z)) }
+
+            // Sides
+            listOf(
+                    planePoints[0], planePoints[4], planePoints[1], planePoints[5],
+                    planePoints[2], planePoints[6], planePoints[3], planePoints[7]
+            ).forEach { vertices.addAll(listOf(it.x, it.y, it.z)) }
+
+            engineCore.resources.getModel(0).setVertices(vertices.toFloatArray())
+        }
     }
 
     companion object {

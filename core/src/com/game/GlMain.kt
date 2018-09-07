@@ -25,8 +25,8 @@ class GlMain : ApplicationAdapter() {
         modelBuilder.begin()
         val coneBuilder = modelBuilder.part("cone", GL20.GL_LINES, VertexAttributes(VertexAttribute.Position()), Material())
         coneBuilder.setColor(Color.RED)
-        (0..11).forEach {
-            coneBuilder.line(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f)
+        (1..12).forEach {
+            coneBuilder.line(0.0f, it.toFloat(), 0.0f, 0.0f, it.toFloat(), 0.0f)
         }
 
 //        coneBuilder.line(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f)

@@ -47,12 +47,12 @@ internal class GameLogicJob(
         }
 
         fun updateGameLogic(engineCore: EngineCore, deltaTime: Float) {
-            engineCore.mainCamera.update()
             // Updates
             engineCore.buffer.doSafeAction {
                 engineCore.buffer.entitiesList.forEach { it.update(deltaTime, engineCore) }
             }
             engineCore.state.update(deltaTime, engineCore)
+            engineCore.mainCamera.update()
         }
 
         fun frustumCulling(engineCore: EngineCore) {
