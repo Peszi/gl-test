@@ -22,7 +22,7 @@ internal class RenderLogicJob(
                 engineCore.updateQueue.processData {
                     gameState = this.gameState
                     this.renderableList.forEach {
-                        val distance = Vector3(0f, 0f, 0f).dst(it.transform.getTranslation(tmp)) // TODO tmp
+                        val distance = this.gameState.position.dst(it.transform.getTranslation(tmp)) // TODO tmp
                         if (distance < MainCamera.CAMERA_FAR) {
                             keysBuffer.add(RenderUtil.getRenderKey(
                                     it.renderable.renderingKey, distance / MainCamera.CAMERA_FAR) to it)
@@ -30,7 +30,8 @@ internal class RenderLogicJob(
                     }
                 }
 
-                val renderList = keysQsort(keysBuffer).map { it.second }.asReversed()
+                val renderList = keysQsort(keysBuffer)
+                        .map { it.second }.asReversed()
                 engineCore.diagnostic.onSortEnd(TimeSample(startTime, DiagTimer.getTimeStamp(), gameState?.frameIdx ?: 0))
 
                 gameState?.let {

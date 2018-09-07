@@ -1,5 +1,6 @@
 package com.game.entity
 
+import com.badlogic.gdx.math.Matrix4
 import com.badlogic.gdx.math.Vector3
 import com.game.core.EngineCore
 import com.game.diag.Log
@@ -13,7 +14,8 @@ internal class TestEntity: Entity() {
     override fun start(engineCore: EngineCore) {
         super.start(engineCore)
 
-        engineCore.buffer.addEntity(RenderableEntity(
+        engineCore.buffer.addEntity(Entity(
+                Matrix4().idt(),
                 RenderComponent.build(2, 2 to engineCore.resources.getMaterial(2))
         ))
     }

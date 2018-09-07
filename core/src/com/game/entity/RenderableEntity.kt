@@ -7,12 +7,12 @@ import com.badlogic.gdx.math.Vector3
 import com.game.core.EngineCore
 import com.game.render.RenderUtil
 
-internal open class RenderableEntity(
-        var renderable: RenderComponent? = null
-): Entity() {
-
-    override fun update(delta: Float, engineCore: EngineCore) {}
-}
+//internal open class RenderableEntity(
+//
+//): Entity() {
+//
+//    override fun update(delta: Float, engineCore: EngineCore) {}
+//}
 
 internal class RenderComponent(
         var meshId: Int = 0,

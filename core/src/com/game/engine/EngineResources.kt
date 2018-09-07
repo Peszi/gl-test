@@ -5,26 +5,30 @@ import com.badlogic.gdx.graphics.Mesh
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g3d.loader.ObjLoader
 import com.badlogic.gdx.graphics.glutils.ShaderProgram
+import com.badlogic.gdx.math.collision.BoundingBox
 import com.game.diag.Log
 import com.game.entity.MaterialResource
-import java.util.*
 
 internal interface EngineResources {
     fun loadShader(shaderName: String): Int
     fun loadTexture(textureName: String): Int
     fun loadModel(modelName: String): Int
-    fun addModel(mesh: Mesh): Int
     fun addMaterial(material: MaterialResource): Pair<Int, MaterialResource>
+
+    fun addModel(mesh: Mesh): Int
 
     fun getDefaultShader(): Int
     fun getDefaultTexture(): Int
     fun getDefaultMaterial(): Pair<Int, MaterialResource>
+
     fun getDefaultModel(): Int
 
     fun getShader(shaderId: Int): ShaderProgram
     fun getTexture(textureId: Int): Texture
-    fun getModel(modelId: Int): Mesh
     fun getMaterial(materialId: Int): MaterialResource
+
+    fun getModel(modelId: Int): Mesh
+    fun getBoundingBox(modelId: Int): BoundingBox
 
     fun disposeResources()
 }
@@ -36,6 +40,7 @@ internal class EngineResourcesImpl: EngineResources {
     private val materialsBuffer = mutableListOf<MaterialResource>()
 
     private val modelsBuffer = mutableListOf<Mesh>() //Collections.synchronizedList(())
+    private val boundingBuffer = mutableListOf<BoundingBox>()
 
     private var objLoader = ObjLoader()
 
@@ -61,16 +66,15 @@ internal class EngineResourcesImpl: EngineResources {
 
     override fun loadModel(modelName: String): Int {
         Log.info("loading model [$modelName]")
-        val mesh = objLoader.loadModel(Gdx.files.internal(modelName)).meshes.first()
-        mesh.setAutoBind(false)
-        modelsBuffer.add(mesh)
-        return modelsBuffer.size-1
+        return addModel(objLoader.loadModel(Gdx.files.internal(modelName)).meshes.first())
     }
 
     override fun addModel(mesh: Mesh): Int {
         mesh.setAutoBind(false)
         modelsBuffer.add(mesh)
-        Log.info("loading model ID ${modelsBuffer.size-1}")
+        val idx = modelsBuffer.size-1
+        Log.info("added model ID $idx")
+        boundingBuffer.add(mesh.calculateBoundingBox())
         return modelsBuffer.size-1
     }
 
@@ -96,6 +100,9 @@ internal class EngineResourcesImpl: EngineResources {
 
     override fun getModel(modelId: Int) =
             modelsBuffer.getOrNull(modelId) ?: throw RuntimeException("Model not exists!")
+
+    override fun getBoundingBox(modelId: Int) =
+            boundingBuffer.getOrNull(modelId) ?: throw RuntimeException("Bounding box not exists!")
 
     override fun getMaterial(materialId: Int) =
             materialsBuffer.getOrNull(materialId) ?: throw RuntimeException("Material not exists!")

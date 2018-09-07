@@ -9,11 +9,9 @@ import com.game.data.BlockingBuffer
 import com.game.data.EntitiesBuffer
 import com.game.data.RenderBuffer
 import com.game.diag.ProfilerTool
-import com.game.entity.Entity
 import com.game.render.MainCamera
 import com.main.threading.ThreadsImpl
 import com.main.threading.ThreadsInterface
-import java.util.concurrent.ArrayBlockingQueue
 
 internal class EngineCore {
 
@@ -29,7 +27,7 @@ internal class EngineCore {
     val updateQueue = BlockingBuffer<RenderBuffer>()
     val renderQueue = BlockingBuffer<RenderBuffer>()
 
-    val camera: MainCamera = MainCamera()
+    val mainCamera: MainCamera = MainCamera()
 
     // Outer
     val resources = EngineResourcesImpl()
@@ -40,12 +38,35 @@ internal class EngineCore {
     var frameIdx = 0
 
     fun create() {
+        val vertices = mutableListOf<Float>()
+        val planePoints = mainCamera.camera.frustum.planePoints
+
+        // Near
+        listOf(
+                planePoints[0], planePoints[1], planePoints[1], planePoints[2],
+                planePoints[2], planePoints[3], planePoints[3], planePoints[0]
+        ).forEach { vertices.addAll(listOf(it.x, it.y, it.z)) }
+
+        // Far
+        listOf(
+                planePoints[4], planePoints[5], planePoints[5], planePoints[6],
+                planePoints[6], planePoints[7], planePoints[7], planePoints[4]
+        ).forEach { vertices.addAll(listOf(it.x, it.y, it.z)) }
+
+        // Sides
+        listOf(
+                planePoints[0], planePoints[4], planePoints[1], planePoints[5],
+                planePoints[2], planePoints[6], planePoints[3], planePoints[7]
+        ).forEach { vertices.addAll(listOf(it.x, it.y, it.z)) }
+
+        resources.getModel(0).setVertices(vertices.toFloatArray())
+
         coreThreads.runJobs(listOf(GameInitJob(this)))
         renderer = EngineRenderer(resources, renderQueue, diagnostic)
     }
 
     fun resize(width: Float, height: Float) {
-        camera.updateViewport(width, height)
+        mainCamera.updateViewport(width, height)
     }
 
     fun render() {
@@ -66,8 +87,8 @@ internal class GameState {
 
     fun update(delta: Float, engineCore: EngineCore) {
         elapsedTime += delta
-        position = engineCore.camera.camera.position
-        combined = engineCore.camera.camera.combined
+        position = engineCore.mainCamera.camera.position
+        combined = engineCore.mainCamera.camera.combined
     }
 
     // TMP

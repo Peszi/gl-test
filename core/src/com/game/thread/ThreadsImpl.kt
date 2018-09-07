@@ -5,7 +5,7 @@ import java.util.concurrent.Executors
 
 internal class ThreadsImpl: ThreadsInterface {
 
-    private var jobsExecutor = Executors.newWorkStealingPool()
+    private var jobsExecutor = Executors.newWorkStealingPool( Runtime.getRuntime().availableProcessors() - 1)
 
     init {
         Log.info("allocating " + Runtime.getRuntime().availableProcessors() + " threads ..")

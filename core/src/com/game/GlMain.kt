@@ -25,27 +25,18 @@ class GlMain : ApplicationAdapter() {
         modelBuilder.begin()
         val coneBuilder = modelBuilder.part("cone", GL20.GL_LINES, VertexAttributes(VertexAttribute.Position()), Material())
         coneBuilder.setColor(Color.RED)
-        coneBuilder.line(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f)
-        coneBuilder.line(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f)
-        coneBuilder.line(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f)
-        coneBuilder.line(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f)
+        (0..11).forEach {
+            coneBuilder.line(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f)
+        }
+
+//        coneBuilder.line(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f)
+//        coneBuilder.line(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f)
+//        coneBuilder.line(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f)
         val coneMesh = modelBuilder.end().meshes.first()
 
-        coneMesh.setVertices(
-                floatArrayOf(
-                        5f, 5f, -25f,
-                        0f, 0f, 0f,
-
-                        -5f, 5f, -25f,
-                        0f, 0f, 0f,
-
-                        -5f, -5f, -25f,
-                        0f, 0f, 0f,
-
-                        5f, -5f, -25f,
-                        0f, 0f, 0f
-                )
-        )
+//        coneMesh.setVertices(
+//                (0..71).map { 0f }.toFloatArray()
+//        )
 
         // Grid
 //        modelBuilder.begin()
@@ -81,8 +72,8 @@ class GlMain : ApplicationAdapter() {
 
 
         val random = Random()
-        val objectsCount = 10_000 // 30_000
-        val translateLimit = objectsCount / 40 // 140
+        val objectsCount = 60_000 // 30_000
+        val translateLimit = objectsCount / 140 // 140
 
         val renderComponentA = RenderComponent.build(boxModelId, transparentMaterialId)
         val renderComponentB = RenderComponent.build(tombstoneModelId, tombstoneMaterialId)
@@ -91,13 +82,14 @@ class GlMain : ApplicationAdapter() {
         engineCore.buffer.addEntity(CameraController())
 //        engineCore.buffer.addEntity(TestEntity())
 
-        engineCore.buffer.addEntity(RenderableEntity(
+        engineCore.buffer.addEntity(Entity(
+                Matrix4().idt(),
                 RenderComponent.build(boxModelId, centerMaterialId)
         ))
 
-        engineCore.buffer.addEntity(RenderableEntity(
-                RenderComponent.build(coneModelId, lineMaterialId)
-        ))
+//        engineCore.buffer.addEntity(RenderableEntity(
+//                RenderComponent.build(coneModelId, lineMaterialId)
+//        ))
 
         Log.info("adding objects ..")
 

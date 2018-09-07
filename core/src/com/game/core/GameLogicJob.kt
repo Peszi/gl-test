@@ -2,11 +2,11 @@ package com.game.core
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
+import com.badlogic.gdx.math.Vector3
 import com.game.data.RenderBuffer
 import com.game.data.RenderData
 import com.game.diag.DiagTimer
 import com.game.diag.TimeSample
-import com.game.entity.RenderableEntity
 import com.main.threading.JobDesc
 
 internal class GameLogicJob(
@@ -14,10 +14,13 @@ internal class GameLogicJob(
 ): JobDesc(
         {
             while (true) {
-                val startTime = DiagTimer.getTimeStamp()
+
                 addAwaitingEntities(engineCore)
                 handleGameInputs(engineCore)
                 updateGameLogic(engineCore, Gdx.graphics.deltaTime)
+                frustumCulling(engineCore)
+
+                val startTime = DiagTimer.getTimeStamp()
                 val renderBuffer = getRenderableBuffer(engineCore)
                 engineCore.diagnostic.onUpdateEnd(TimeSample(startTime, DiagTimer.getTimeStamp(), renderBuffer.gameState.frameIdx))
 
@@ -44,28 +47,34 @@ internal class GameLogicJob(
         }
 
         fun updateGameLogic(engineCore: EngineCore, deltaTime: Float) {
+            engineCore.mainCamera.update()
             // Updates
-            val deltaTime = Gdx.graphics.deltaTime
             engineCore.buffer.doSafeAction {
                 engineCore.buffer.entitiesList.forEach { it.update(deltaTime, engineCore) }
             }
-            engineCore.camera.camera.update()
             engineCore.state.update(deltaTime, engineCore)
+        }
+
+        fun frustumCulling(engineCore: EngineCore) {
+
         }
 
         fun getRenderableBuffer(engineCore: EngineCore): RenderBuffer {
 
-            val renderableList = (engineCore.buffer.entitiesList
-                    .filter { it is RenderableEntity } as List<RenderableEntity>)
-                    .filter { it.renderable != null }
-                    .map { RenderData(it.transform, it.renderable!!) }
+            val tmp = Vector3()
+            val tmp2 = Vector3()
 
-            engineCore.frameIdx++
-            if (engineCore.frameIdx >= 6)
-                engineCore.frameIdx = 0
+            val renderableList = engineCore.buffer.entitiesList
+                    .filter { it.renderable != null }
+                    .filter {
+                        val boundingBox = engineCore.resources.getBoundingBox(it.renderable!!.meshId)
+                        it.transform.getTranslation(tmp)
+                        boundingBox.getDimensions(tmp2)
+                        engineCore.mainCamera.camera.frustum.boundsInFrustum(tmp, tmp2)
+                    }
 
             return RenderBuffer(
-                    engineCore.state, renderableList
+                    engineCore.state, renderableList.map { RenderData(it.transform, it.renderable!!) }
             )
         }
     }

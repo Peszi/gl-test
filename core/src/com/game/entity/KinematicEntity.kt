@@ -1,5 +1,6 @@
 package com.game.entity
 
+import com.badlogic.gdx.math.Matrix4
 import com.badlogic.gdx.math.Vector3
 import com.game.core.EngineCore
 import java.util.*
@@ -8,7 +9,8 @@ internal class KinematicEntity(
         random: Random,
         position: Vector3,
         renderable: RenderComponent
-): RenderableEntity(
+): Entity(
+        Matrix4().idt(),
         renderable
 ) {
 

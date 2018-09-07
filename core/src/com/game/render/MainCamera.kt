@@ -1,17 +1,20 @@
 package com.game.render
 
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.Input
 import com.badlogic.gdx.graphics.PerspectiveCamera
 import com.game.core.GameState
 
 internal class MainCamera {
+
+    var updateFrustum = true
 
     companion object {
         const val CAMERA_FAR = 500.0f
     }
 
     var camera = PerspectiveCamera(
-            60f, Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat()
+            67f, Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat()
     )
 
     init {
@@ -28,4 +31,8 @@ internal class MainCamera {
         Gdx.gl.glViewport(0, 0, camera.viewportWidth.toInt(), camera.viewportHeight.toInt())
     }
 
+    fun update() {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.K)) updateFrustum = !updateFrustum
+        camera.update(updateFrustum)
+    }
 }

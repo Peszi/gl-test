@@ -8,7 +8,7 @@ import java.util.concurrent.locks.ReentrantLock
 
 internal class EntitiesBuffer: BufferInterface {
 
-    val addedEntities = ArrayBlockingQueue<Entity>(20_000)
+    val addedEntities = ArrayBlockingQueue<Entity>(70_000)
 
     private val entitiesLock = ReentrantLock()
     val entitiesList = mutableListOf<Entity>()
